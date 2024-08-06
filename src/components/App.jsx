@@ -4,7 +4,7 @@ import HomePage from "./HomePage";
 
 export default function App() {
 
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(true);
 
     const handleLoginSuccess = () => {
         setIsLoggedIn(true);

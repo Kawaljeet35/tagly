@@ -3,43 +3,16 @@
 @tailwind components;
 @tailwind utilities;
 
-html{
-  background-color: rgb(240, 242, 245);
+html {
+  background-color: rgb(245, 245, 245);
 }
 .input-default {
-    border: 1px solid #aab5c3; /* Gray border */
+    border: 1px solid #aab5c3;
   }
   
 .input-default:focus {
-    border-color: #41d7d7; /* Blue border on focus */
-    outline: none; /* Remove default outline */
+    border-color: #0cf5f5; 
+    outline: none; 
 }
 
-.nav-top {
-  position: fixed;
-  top: 90px;
-  height: calc(100vh - 90px);
-  width: 20%;
-  background-color: transparent;
-  overflow-y: auto;
-  z-index: 1000;
-  scrollbar-width: none; /* Firefox */
-}
 
-.nav-top:hover {
-  scrollbar-width: thin; /* Firefox */
-}
-
-/* Webkit-based browsers (Chrome, Safari) */
-.nav-top::-webkit-scrollbar {
-  width: 0; /* Hide scrollbar */
-}
-
-.nav-top:hover::-webkit-scrollbar {
-  width: 8px; /* Show scrollbar on hover */
-}
-
-.nav-top:hover::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.5); /* Customize thumb color */
-  border-radius: 10px;
-}
