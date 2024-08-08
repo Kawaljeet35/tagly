@@ -5,6 +5,7 @@ import ProfilePic from '../assets/pic.jpg';
 export default function Navbar() {
     return (
         <nav className="fixed top-0 w-full bg-white flex items-center p-2">
+            
             <a 
                 href="" 
                 className='flex items-center py-2 px-4 gap-2 hover:scale-110 flex-shrink-0'
