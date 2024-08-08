@@ -7,7 +7,7 @@ export default function Navbar() {
         <nav className="fixed top-0 w-full bg-white flex items-center p-2">
             <a 
                 href="" 
-                className='flex items-center py-2 px-4 gap-2 hover:scale-110'
+                className='flex items-center py-2 px-4 gap-2 hover:scale-110 flex-shrink-0'
                 onClick={(e) => e.preventDefault()}
             >
                 <img src={CircularTaglyLogo} alt='Tagly Logo' className='w-10'/>
@@ -36,7 +36,7 @@ export default function Navbar() {
                 </svg>
             </div>
 
-            <div className='flex justify-center ml-12 space-x-4'>
+            <div className='justify-center ml-12 space-x-4 hidden lg:flex'>
                 <a 
                     href=""
                     onClick={(e) => e.preventDefault()}
@@ -165,7 +165,7 @@ export default function Navbar() {
 
             <div className='flex space-x-4 ml-auto mr-4'>
 
-                <button className='hover:scale-110'>
+                <button className='hidden md:block hover:scale-110'>
                     <svg 
                         viewBox="0 0 24 24" 
                         fill="none" 
@@ -186,7 +186,7 @@ export default function Navbar() {
                     </svg>
                 </button>
 
-                <button className='hover:scale-110'>
+                <button className='hidden md:block hover:scale-110'>
                     <svg 
                         viewBox="0 0 24 24" 
                         fill="none" 
@@ -213,7 +213,7 @@ export default function Navbar() {
                 <a 
                     href=""
                     onClick={(e) => e.preventDefault()}
-                    className='hover:scale-110'
+                    className='hidden md:block hover:scale-110'
                 >
                     <svg 
                         viewBox="0 0 24 24" 
@@ -251,7 +251,7 @@ export default function Navbar() {
                     onClick={(e) => e.preventDefault()}
                     className='hover:scale-110 my-auto'
                 >
-                    <div className='w-9 h-9 rounded-full flex items-center justify-center'>
+                    <div className='w-10 h-10 rounded-full flex items-center justify-center'>
                         <img src={ProfilePic} alt='pic' className='w-full h-full object-cover rounded-full'/>
                     </div>
                 </a>
