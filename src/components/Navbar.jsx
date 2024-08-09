@@ -4,7 +4,7 @@ import ProfilePic from '../assets/pic.jpg';
 
 export default function Navbar() {
     return (
-        <nav className="fixed top-0 w-full bg-white flex items-center p-2">
+        <nav className="fixed top-0 w-full bg-white flex items-center p-2 shadow">
             
             <a 
                 href="" 
