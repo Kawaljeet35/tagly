@@ -1,0 +1,5 @@
+FrontEnd/node_modules/
+app/target/
+minio-data/
+.idea/
+FrontEnd/.git_frontend_backup/

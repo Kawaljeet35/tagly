@@ -1,0 +1,19 @@
+/* src/index.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  background-color: rgb(245, 245, 245);
+}
+.input-default {
+  border: 1px solid #aab5c3;
+}
+
+.input-default:focus {
+  border-color: #0cf5f5;
+  outline: none;
+}
