@@ -24,6 +24,8 @@ public class Message {
     @Column(name = "is_read")
     private boolean read;
 
+    private String imageUrl;
+
     private LocalDateTime createdAt;
 
     public Message() {
@@ -67,6 +69,14 @@ public class Message {
 
     public void setRead(boolean read) {
         this.read = read;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 
     public LocalDateTime getCreatedAt() {

@@ -4,28 +4,33 @@ import com.tagly.app.entity.User;
 import com.tagly.app.entity.Message;
 import com.tagly.app.repository.MessageRepository;
 import com.tagly.app.repository.UserRepository;
+import io.minio.PutObjectArgs;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.*;
-
+import io.minio.MinioClient;
 import com.tagly.app.dto.InboxItemDTO;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class MessageService {
 
     private final MessageRepository messageRepository;
     private final UserRepository userRepository;
+    private final MinioClient minioClient;
 
-    public MessageService(MessageRepository messageRepository, UserRepository userRepository) {
+    public MessageService(MessageRepository messageRepository, UserRepository userRepository, MinioClient minioClient) {
         this.messageRepository = messageRepository;
         this.userRepository = userRepository;
+        this.minioClient = minioClient;
     }
 
     public void sendMessage(
             String senderUsername,
             Long receiverId,
-            String content
+            String content,
+            MultipartFile file
     ) {
 
         User sender = userRepository
@@ -47,6 +52,49 @@ public class MessageService {
         message.setContent(content);
         message.setCreatedAt(LocalDateTime.now());
         message.setRead(false);
+
+        String imageUrl = null;
+
+        if (file != null &&
+                !file.isEmpty() &&
+                file.getContentType() != null &&
+                file.getContentType().startsWith("image")) {
+
+            String fileName =
+                    System.currentTimeMillis()
+                            + "_"
+                            + file.getOriginalFilename();
+
+            try {
+
+                minioClient.putObject(
+                        PutObjectArgs.builder()
+                                .bucket("tagly-posts")
+                                .object(fileName)
+                                .stream(
+                                        file.getInputStream(),
+                                        file.getSize(),
+                                        -1
+                                )
+                                .contentType(
+                                        file.getContentType()
+                                )
+                                .build()
+                );
+
+                imageUrl =
+                        "http://127.0.0.1:9000/tagly-posts/"
+                                + fileName;
+
+            } catch (Exception e) {
+                throw new RuntimeException(
+                        "Error uploading image",
+                        e
+                );
+            }
+        }
+        message.setImageUrl(imageUrl);
+
         messageRepository.save(message);
     }
 

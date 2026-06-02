@@ -4,6 +4,7 @@ import { useRef } from "react";
 export default function ChatWindow({ userId, userName }) {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
+  const [selectedImage, setSelectedImage] = useState(null);
   const currentUsername = localStorage.getItem("username");
   const messagesEndRef = useRef(null);
 
@@ -27,7 +28,15 @@ export default function ChatWindow({ userId, userName }) {
   };
 
   const sendMessage = async () => {
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() && !selectedImage) return;
+
+    const formData = new FormData();
+
+    formData.append("content", newMessage);
+
+    if (selectedImage) {
+      formData.append("file", selectedImage);
+    }
 
     try {
       const response = await fetch(
@@ -36,14 +45,14 @@ export default function ChatWindow({ userId, userName }) {
           method: "POST",
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
-            "Content-Type": "application/json",
           },
-          body: JSON.stringify(newMessage),
+          body: formData,
         },
       );
 
       if (response.ok) {
         setNewMessage("");
+        setSelectedImage(null);
         fetchMessages();
       }
     } catch (error) {
@@ -90,7 +99,16 @@ export default function ChatWindow({ userId, userName }) {
                   {message.sender.name}
                 </p>
 
-                <p>{message.content}</p>
+                {message.content && <p>{message.content}</p>}
+
+                {message.imageUrl && (
+                  <img
+                    src={message.imageUrl}
+                    alt="Chat image"
+                    className="mt-2 rounded-lg max-w-full"
+                  />
+                )}
+
                 <p className="text-xs mt-2 opacity-70">
                   {new Date(message.createdAt).toLocaleTimeString([], {
                     hour: "2-digit",
@@ -112,7 +130,11 @@ export default function ChatWindow({ userId, userName }) {
           placeholder="Type a message..."
           className="flex-1 border rounded-lg px-3 py-2 outline-none text-black"
         />
-
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e) => setSelectedImage(e.target.files[0])}
+        />
         <button
           onClick={sendMessage}
           className="bg-slate-700 text-white px-4 py-2 rounded-lg"

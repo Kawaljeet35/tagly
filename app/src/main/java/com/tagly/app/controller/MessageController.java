@@ -2,12 +2,11 @@ package com.tagly.app.controller;
 
 import com.tagly.app.dto.InboxItemDTO;
 import com.tagly.app.entity.Message;
-import com.tagly.app.entity.User;
-import com.tagly.app.dto.InboxItemDTO;
 import com.tagly.app.service.MessageService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -24,7 +23,8 @@ public class MessageController {
     @PostMapping("/{receiverId}")
     public ResponseEntity<String> sendMessage(
             @PathVariable Long receiverId,
-            @RequestBody String content
+            @RequestParam(required = false) String content,
+            @RequestParam(required = false) MultipartFile file
     ) {
 
         String username = SecurityContextHolder
@@ -35,7 +35,8 @@ public class MessageController {
         messageService.sendMessage(
                 username,
                 receiverId,
-                content
+                content,
+                file
         );
 
         return ResponseEntity.ok("Message sent");
