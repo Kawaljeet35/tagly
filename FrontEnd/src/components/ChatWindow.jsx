@@ -123,17 +123,21 @@ export default function ChatWindow({ userId, userName }) {
       </div>
 
       <div className="p-3 border-t flex gap-2 bg-teal-600">
+        <label className="bg-slate-700 text-white px-3 py-2 rounded-lg cursor-pointer">
+          📷
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => setSelectedImage(e.target.files[0])}
+            className="hidden"
+          />
+        </label>
         <input
           type="text"
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           placeholder="Type a message..."
-          className="flex-1 border rounded-lg px-3 py-2 outline-none text-black"
-        />
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => setSelectedImage(e.target.files[0])}
+          className="flex-1 min-w-0 border rounded-lg px-3 py-2 outline-none text-black"
         />
         <button
           onClick={sendMessage}
