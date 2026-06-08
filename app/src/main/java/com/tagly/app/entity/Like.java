@@ -2,6 +2,8 @@ package com.tagly.app.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "likes")
 public class Like {
@@ -18,6 +20,8 @@ public class Like {
     @ManyToOne
     @JoinColumn(name = "post_id", nullable = false)
     private Post post;
+
+    private LocalDateTime createdAt;
 
     public Long getId() {
         return id;
@@ -43,4 +47,11 @@ public class Like {
         this.post = post;
     }
 
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
 }

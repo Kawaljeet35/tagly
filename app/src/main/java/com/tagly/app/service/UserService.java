@@ -7,6 +7,8 @@ import io.minio.PutObjectArgs;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import com.tagly.app.entity.User;
+
+import java.util.List;
 import java.util.Optional;
 import com.tagly.app.dto.UserResponse;
 
@@ -63,5 +65,13 @@ public class UserService {
         } catch (Exception e) {
             throw new RuntimeException("Error uploading profile picture", e);
         }
+    }
+
+    public List<User> searchUsers(String keyword) {
+        return userRepository
+                .findByNameContainingIgnoreCaseOrUsernameContainingIgnoreCase(
+                        keyword,
+                        keyword
+                );
     }
 }

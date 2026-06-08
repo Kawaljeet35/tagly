@@ -60,4 +60,11 @@ public class UserController {
 
         return ResponseEntity.ok(user);
     }
+
+    @GetMapping("/search")
+    public List<User> searchUsers(
+            @RequestParam String keyword
+    ) {
+        return userService.searchUsers(keyword);
+    }
 }

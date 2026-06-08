@@ -122,6 +122,11 @@ export default function ChatWindow({ userId, userName }) {
         <div ref={messagesEndRef}></div>
       </div>
 
+      {selectedImage && (
+        <div className="px-3 py-1 bg-gray-100 border-t text-xs truncate">
+          📷 {selectedImage.name}
+        </div>
+      )}
       <div className="p-3 border-t flex gap-2 bg-teal-600">
         <label className="bg-slate-700 text-white px-3 py-2 rounded-lg cursor-pointer">
           📷
@@ -136,6 +141,11 @@ export default function ChatWindow({ userId, userName }) {
           type="text"
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              sendMessage();
+            }
+          }}
           placeholder="Type a message..."
           className="flex-1 min-w-0 border rounded-lg px-3 py-2 outline-none text-black"
         />

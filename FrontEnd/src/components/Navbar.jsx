@@ -27,9 +27,28 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
   const [hasSeenNotifications, setHasSeenNotifications] = useState(
     localStorage.getItem("hasSeenNotifications") === "true",
   );
+  const [previousNotificationCount, setPreviousNotificationCount] = useState(0);
   const [activeChats, setActiveChats] = useState([]);
   const [minimizedChats, setMinimizedChats] = useState([]);
+  const [searchText, setSearchText] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
   const navigate = useNavigate();
+
+  const allNotifications = [
+    ...likeNotifications.map((like) => ({
+      id: `like-${like.id}`,
+      type: "like",
+      user: like.user,
+      createdAt: like.createdAt,
+    })),
+
+    ...commentNotifications.map((comment) => ({
+      id: `comment-${comment.id}`,
+      type: "comment",
+      user: comment.user,
+      createdAt: comment.createdAt,
+    })),
+  ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
   const showTooltip = (text, event) => {
     const tooltipWidth = 100;
@@ -91,7 +110,6 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
       );
 
       const data = await response.json();
-      console.log("LIKE DATA:", data);
       setLikeNotifications(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error(error);
@@ -110,7 +128,6 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
       );
 
       const data = await response.json();
-      console.log("COMMENT DATA:", data);
       setCommentNotifications(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error(error);
@@ -154,6 +171,30 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
     }
   };
 
+  const searchUsers = async (keyword) => {
+    if (!keyword.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `http://localhost:8080/api/users/search?keyword=${keyword}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        },
+      );
+
+      const data = await response.json();
+
+      setSearchResults(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   useEffect(() => {
     fetchPendingRequests();
     fetchLikeNotifications();
@@ -162,6 +203,9 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
 
     const interval = setInterval(() => {
       fetchInboxUsers();
+      fetchPendingRequests();
+      fetchLikeNotifications();
+      fetchCommentNotifications();
     }, 3000);
 
     if (location.pathname === "/") {
@@ -176,6 +220,23 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
 
     return () => clearInterval(interval);
   }, [location.pathname]);
+
+  useEffect(() => {
+    const currentCount =
+      pendingRequests.length +
+      likeNotifications.length +
+      commentNotifications.length;
+
+    if (
+      previousNotificationCount > 0 &&
+      currentCount > previousNotificationCount
+    ) {
+      setHasSeenNotifications(false);
+      localStorage.setItem("hasSeenNotifications", "false");
+    }
+
+    setPreviousNotificationCount(currentCount);
+  }, [pendingRequests, likeNotifications, commentNotifications]);
 
   return (
     <nav className="fixed top-0 w-full bg-white flex items-center px-2 py-1 shadow z-10">
@@ -193,6 +254,11 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
           name="search"
           type="text"
           placeholder="Search tagly"
+          value={searchText}
+          onChange={(e) => {
+            setSearchText(e.target.value);
+            searchUsers(e.target.value);
+          }}
           className="input-default rounded-full px-2 py-1 pl-10 bg-stone-100 border-none text-lg"
         />
         <svg
@@ -221,7 +287,24 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
           Users
         </Link>
       </div>
-
+      {searchResults.length > 0 && (
+        <div className="absolute top-12 left-0 w-72 bg-white border rounded-lg shadow-lg z-50">
+          {searchResults.map((user) => (
+            <div
+              key={user.id}
+              onClick={() => {
+                navigate(`/users/${user.id}`);
+                setSearchText("");
+                setSearchResults([]);
+              }}
+              className="p-3 border-b hover:bg-gray-100 cursor-pointer"
+            >
+              <p className="font-semibold">{user.name}</p>
+              <p className="text-sm text-gray-500">@{user.username}</p>
+            </div>
+          ))}
+        </div>
+      )}
       <div className="justify-center items-center ml-12 space-x-4 hidden lg:flex">
         <Link
           to="/"
@@ -420,7 +503,9 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
               commentNotifications.length >
               0 && (
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1">
-                {pendingRequests.length + likeNotifications.length}
+                {pendingRequests.length +
+                  likeNotifications.length +
+                  commentNotifications.length}
               </span>
             )}
           <svg
@@ -447,7 +532,7 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
           </svg>
         </button>
         {showNotifications && (
-          <div className="absolute right-0 top-14 w-72 bg-white shadow-lg rounded-xl border z-50">
+          <div className="absolute right-0 top-14 w-72 max-h-96 overflow-y-auto bg-white shadow-lg rounded-xl border z-50">
             <div className="p-3 border-b font-semibold">Notifications</div>
 
             {pendingRequests.length === 0 ? (
@@ -462,29 +547,18 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
                 </div>
               ))
             )}
-            {likeNotifications.map((like) => (
+            {allNotifications.map((notification) => (
               <div
-                key={`like-${like.id}`}
+                key={notification.id}
                 className="p-3 border-b hover:bg-gray-50"
               >
                 <p className="text-sm">
                   <span className="font-semibold">
-                    {like.user.name || like.user.username}
+                    {notification.user.name || notification.user.username}
                   </span>{" "}
-                  liked your post
-                </p>
-              </div>
-            ))}
-            {commentNotifications.map((comment) => (
-              <div
-                key={`comment-${comment.id}`}
-                className="p-3 border-b hover:bg-gray-50"
-              >
-                <p className="text-sm">
-                  <span className="font-semibold">
-                    {comment.user.name || comment.user.username}
-                  </span>{" "}
-                  commented on your post
+                  {notification.type === "like"
+                    ? "liked your post"
+                    : "commented on your post"}
                 </p>
               </div>
             ))}
@@ -631,30 +705,31 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
         >
           <div className="flex items-center justify-between p-3 border-b bg-teal-600">
             <h2 className="font-semibold text-white">{chat.name}</h2>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  setMinimizedChats((prev) =>
+                    prev.includes(chat.userId)
+                      ? prev.filter((id) => id !== chat.userId)
+                      : [...prev, chat.userId],
+                  );
+                }}
+                className="text-zinc-100 text-l leading-none hover:text-cyan-200"
+              >
+                —
+              </button>
 
-            <button
-              onClick={() => {
-                setMinimizedChats((prev) =>
-                  prev.includes(chat.userId)
-                    ? prev.filter((id) => id !== chat.userId)
-                    : [...prev, chat.userId],
-                );
-              }}
-              className="text-zinc-100"
-            >
-              _
-            </button>
-
-            <button
-              onClick={() =>
-                setActiveChats((prev) =>
-                  prev.filter((c) => c.userId !== chat.userId),
-                )
-              }
-              className="text-zinc-100 hover:text-red-300"
-            >
-              ✕
-            </button>
+              <button
+                onClick={() =>
+                  setActiveChats((prev) =>
+                    prev.filter((c) => c.userId !== chat.userId),
+                  )
+                }
+                className="text-zinc-100 hover:text-red-300"
+              >
+                ✕
+              </button>
+            </div>
           </div>
 
           {!minimizedChats.includes(chat.userId) && (

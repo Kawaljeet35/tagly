@@ -180,6 +180,7 @@ public class PostService {
             Like like = new Like();
             like.setUser(user);
             like.setPost(post);
+            like.setCreatedAt(LocalDateTime.now());
             likeRepository.save(like);
             post.setLikesCount(post.getLikesCount() + 1);
         }

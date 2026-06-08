@@ -71,7 +71,7 @@ export default function Profile({ handleLogout }) {
     fetchUser();
     fetchCurrentUser();
     fetchFriendshipStatus();
-  }, []);
+  }, [id]);
   console.log(user);
 
   if (!user) {
