@@ -17,6 +17,7 @@ export default function App() {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("hasSeenNotifications");
     setIsLoggedIn(false);
   };
 

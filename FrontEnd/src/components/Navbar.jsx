@@ -24,9 +24,7 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
   const [inboxUsers, setInboxUsers] = useState([]);
   const [unreadChats, setUnreadChats] = useState([]);
   const [previousInboxUsers, setPreviousInboxUsers] = useState([]);
-  const [hasSeenNotifications, setHasSeenNotifications] = useState(
-    localStorage.getItem("hasSeenNotifications") === "true",
-  );
+  const [hasSeenNotifications, setHasSeenNotifications] = useState(true);
   const [previousNotificationCount, setPreviousNotificationCount] = useState(0);
   const [activeChats, setActiveChats] = useState([]);
   const [minimizedChats, setMinimizedChats] = useState([]);

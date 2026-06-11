@@ -32,6 +32,7 @@ public class UserService {
             throw new RuntimeException("User not found");
         }
         UserResponse response = new UserResponse();
+        response.setId(user.get().getId());
         response.setName(user.get().getName());
 
         response.setUsername(user.get().getUsername());

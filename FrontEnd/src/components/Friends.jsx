@@ -1,10 +1,12 @@
 import Navbar from "./Navbar";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function Friends({ handleLogout, profilePictureUrl }) {
   const [friends, setFriends] = useState([]);
   const [requests, setRequests] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
+  const navigate = useNavigate();
 
   const fetchFriendRequests = async () => {
     try {
@@ -66,7 +68,7 @@ export default function Friends({ handleLogout, profilePictureUrl }) {
       });
 
       const data = await response.json();
-
+      console.log(data);
       setCurrentUser(data);
     } catch (error) {
       console.error(error);
@@ -83,7 +85,7 @@ export default function Friends({ handleLogout, profilePictureUrl }) {
     <>
       <Navbar
         handleLogout={handleLogout}
-        profilePictureUrl={profilePictureUrl}
+        profilePictureUrl={currentUser?.profilePictureUrl}
       />
 
       <div className="mt-20 p-4">
@@ -132,7 +134,8 @@ export default function Friends({ handleLogout, profilePictureUrl }) {
             return (
               <div
                 key={friend.id}
-                className="flex items-center gap-3 mb-3 bg-stone-100 p-3 rounded"
+                onClick={() => navigate(`/users/${friendUser.id}`)}
+                className="inline-flex items-center gap-3 mb-3 bg-stone-100 p-3 rounded cursor-pointer hover:bg-stone-200"
               >
                 <img
                   src={friendUser.profilePictureUrl}
