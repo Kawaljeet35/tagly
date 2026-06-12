@@ -68,7 +68,6 @@ export default function Friends({ handleLogout, profilePictureUrl }) {
       });
 
       const data = await response.json();
-      console.log(data);
       setCurrentUser(data);
     } catch (error) {
       console.error(error);
@@ -150,6 +149,15 @@ export default function Friends({ handleLogout, profilePictureUrl }) {
                     @{friendUser.username}
                   </p>
                 </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/messages/${friendUser.id}`);
+                  }}
+                  className="bg-cyan-600 text-white px-3 py-1 rounded text-sm"
+                >
+                  Message
+                </button>
               </div>
             );
           })}
