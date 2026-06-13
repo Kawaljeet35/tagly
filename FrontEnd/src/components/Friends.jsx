@@ -74,6 +74,24 @@ export default function Friends({ handleLogout, profilePictureUrl }) {
     }
   };
 
+  const unfriend = async (friendshipId) => {
+    try {
+      await fetch(
+        `http://localhost:8080/api/friends/unfriend/${friendshipId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        },
+      );
+
+      fetchFriends();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   useEffect(() => {
     fetchFriendRequests();
     fetchFriends();
@@ -125,6 +143,7 @@ export default function Friends({ handleLogout, profilePictureUrl }) {
         <div className="mt-8">
           <h2 className="text-xl font-bold mb-2">Friends</h2>
           {friends.map((friend) => {
+            console.log(friend);
             const friendUser =
               friend.sender.id === currentUser?.id
                 ? friend.receiver
@@ -157,6 +176,22 @@ export default function Friends({ handleLogout, profilePictureUrl }) {
                   className="bg-cyan-600 text-white px-3 py-1 rounded text-sm"
                 >
                   Message
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+
+                    const confirmed = window.confirm(
+                      `Remove ${friendUser.name} from friends?`,
+                    );
+
+                    if (confirmed) {
+                      unfriend(friend.id);
+                    }
+                  }}
+                  className="bg-red-600 text-white px-3 py-1 rounded text-sm ml-2"
+                >
+                  Unfriend
                 </button>
               </div>
             );

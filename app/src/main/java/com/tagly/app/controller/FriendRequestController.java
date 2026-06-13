@@ -79,4 +79,14 @@ public class FriendRequestController {
         );
     }
 
+    @DeleteMapping("/unfriend/{friendshipId}")
+    public ResponseEntity<String> unfriend(
+            @PathVariable Long friendshipId
+    ) {
+
+        friendRequestService.unfriend(friendshipId);
+
+        return ResponseEntity.ok("Friend removed");
+    }
+
 }

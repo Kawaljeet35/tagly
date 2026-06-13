@@ -122,5 +122,21 @@ public class FriendRequestService {
         return "NONE";
     }
 
+    public void unfriend(Long friendshipId) {
+
+        FriendRequest friendship =
+                friendRequestRepository
+                        .findByIdAndStatus(
+                                friendshipId,
+                                "ACCEPTED"
+                        )
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Friendship not found"
+                                )
+                        );
+
+        friendRequestRepository.delete(friendship);
+    }
 
 }

@@ -23,7 +23,6 @@ export default function Profile({ handleLogout }) {
       );
       const data = await response.json();
 
-      console.log("USER DATA:", data);
       setUser(data);
     } catch (error) {
       console.error(error);
