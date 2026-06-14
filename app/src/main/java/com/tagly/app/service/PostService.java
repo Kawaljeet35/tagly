@@ -290,7 +290,10 @@ public class PostService {
                 );
 
         return likeRepository
-                .findByPostUserOrderByIdDesc(user);
+                .findByPostUserAndUserNotOrderByIdDesc(
+                        user,
+                        user
+                );
     }
 
     public List<Comment> getCommentsForUserPosts(
@@ -304,7 +307,8 @@ public class PostService {
                 );
 
         return commentRepository
-                .findByPostUserOrderByCreatedAtDesc(
+                .findByPostUserAndUserNotOrderByCreatedAtDesc(
+                        user,
                         user
                 );
     }
