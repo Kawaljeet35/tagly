@@ -1,5 +1,6 @@
 package com.tagly.app.service;
 
+import com.tagly.app.config.MinioProperties;
 import com.tagly.app.entity.User;
 import com.tagly.app.entity.Message;
 import com.tagly.app.repository.MessageRepository;
@@ -19,11 +20,13 @@ public class MessageService {
     private final MessageRepository messageRepository;
     private final UserRepository userRepository;
     private final MinioClient minioClient;
+    private final MinioProperties minioProperties;
 
-    public MessageService(MessageRepository messageRepository, UserRepository userRepository, MinioClient minioClient) {
+    public MessageService(MessageRepository messageRepository, UserRepository userRepository, MinioClient minioClient, MinioProperties minioProperties) {
         this.messageRepository = messageRepository;
         this.userRepository = userRepository;
         this.minioClient = minioClient;
+        this.minioProperties = minioProperties;
     }
 
     public void sendMessage(
@@ -69,7 +72,7 @@ public class MessageService {
 
                 minioClient.putObject(
                         PutObjectArgs.builder()
-                                .bucket("tagly-posts")
+                                .bucket(minioProperties.getBucket())
                                 .object(fileName)
                                 .stream(
                                         file.getInputStream(),
@@ -83,7 +86,10 @@ public class MessageService {
                 );
 
                 imageUrl =
-                        "http://127.0.0.1:9000/tagly-posts/"
+                        minioProperties.getEndpoint()
+                                + "/"
+                                + minioProperties.getBucket()
+                                + "/"
                                 + fileName;
 
             } catch (Exception e) {

@@ -8,11 +8,14 @@ export default function Messages() {
 
   const fetchMessages = async () => {
     try {
-      const response = await fetch(`http://localhost:8080/api/messages/${id}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/messages/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
         },
-      });
+      );
 
       const data = await response.json();
 
@@ -30,13 +33,16 @@ export default function Messages() {
 
       formData.append("content", newMessage);
 
-      const response = await fetch(`http://localhost:8080/api/messages/${id}`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/messages/${id}`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: formData,
         },
-        body: formData,
-      });
+      );
 
       if (response.ok) {
         setNewMessage("");

@@ -23,13 +23,16 @@ export default function UploadOverlay({ closeUpload, onPostCreated }) {
     formData.append("content", caption);
 
     try {
-      const response = await fetch("http://localhost:8080/api/posts", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/posts`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: formData,
         },
-        body: formData,
-      });
+      );
 
       if (response.ok) {
         alert("File uploaded successfully!"); // show immediately

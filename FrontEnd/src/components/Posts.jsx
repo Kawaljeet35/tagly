@@ -30,7 +30,7 @@ export default function Posts({
   const handleLike = async () => {
     try {
       const response = await fetch(
-        `http://localhost:8080/api/posts/${id}/like`,
+        `${import.meta.env.VITE_API_URL}/api/posts/${id}/like`,
         {
           method: "POST",
           headers: {
@@ -61,7 +61,7 @@ export default function Posts({
 
     try {
       const response = await fetch(
-        `http://localhost:8080/api/posts/${id}/comment`,
+        `${import.meta.env.VITE_API_URL}/api/posts/${id}/comment`,
         {
           method: "POST",
           headers: {
@@ -87,7 +87,7 @@ export default function Posts({
 
     if (!confirmDelete) return;
     try {
-      const response = await fetch(`http://localhost:8080/api/posts/${id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/posts/${id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -104,7 +104,7 @@ export default function Posts({
 
   const handleEditPost = async () => {
     try {
-      const response = await fetch(`http://localhost:8080/api/posts/${id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/posts/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -127,7 +127,7 @@ export default function Posts({
   const fetchComments = async () => {
     try {
       const response = await fetch(
-        `http://localhost:8080/api/posts/${id}/comments`,
+        `${import.meta.env.VITE_API_URL}/api/posts/${id}/comments`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,

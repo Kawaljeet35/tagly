@@ -11,7 +11,7 @@ export default function Friends({ handleLogout, profilePictureUrl }) {
   const fetchFriendRequests = async () => {
     try {
       const response = await fetch(
-        "http://localhost:8080/api/friends/requests",
+        `${import.meta.env.VITE_API_URL}/api/friends/requests`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -29,11 +29,14 @@ export default function Friends({ handleLogout, profilePictureUrl }) {
 
   const fetchFriends = async () => {
     try {
-      const response = await fetch("http://localhost:8080/api/friends/all", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/friends/all`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
         },
-      });
+      );
 
       const data = await response.json();
 
@@ -45,12 +48,15 @@ export default function Friends({ handleLogout, profilePictureUrl }) {
 
   const acceptRequest = async (requestId) => {
     try {
-      await fetch(`http://localhost:8080/api/friends/accept/${requestId}`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+      await fetch(
+        `${import.meta.env.VITE_API_URL}/api/friends/accept/${requestId}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
         },
-      });
+      );
 
       fetchFriendRequests();
       fetchFriends();
@@ -61,11 +67,14 @@ export default function Friends({ handleLogout, profilePictureUrl }) {
 
   const fetchCurrentUser = async () => {
     try {
-      const response = await fetch("http://localhost:8080/api/users/me", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/users/me`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
         },
-      });
+      );
 
       const data = await response.json();
       setCurrentUser(data);
@@ -77,7 +86,7 @@ export default function Friends({ handleLogout, profilePictureUrl }) {
   const unfriend = async (friendshipId) => {
     try {
       await fetch(
-        `http://localhost:8080/api/friends/unfriend/${friendshipId}`,
+        `${import.meta.env.VITE_API_URL}/api/friends/unfriend/${friendshipId}`,
         {
           method: "DELETE",
           headers: {

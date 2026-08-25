@@ -13,8 +13,8 @@ export default function Profile({ handleLogout }) {
     try {
       const response = await fetch(
         id
-          ? `http://localhost:8080/api/users/${id}`
-          : "http://localhost:8080/api/users/me",
+          ? `${import.meta.env.VITE_API_URL}/api/users/${id}`
+          : `${import.meta.env.VITE_API_URL}/api/users/me`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -31,11 +31,14 @@ export default function Profile({ handleLogout }) {
 
   const fetchCurrentUser = async () => {
     try {
-      const response = await fetch("http://localhost:8080/api/users/me", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/users/me`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
         },
-      });
+      );
 
       const data = await response.json();
 
@@ -50,7 +53,7 @@ export default function Profile({ handleLogout }) {
 
     try {
       const response = await fetch(
-        `http://localhost:8080/api/friends/status/${id}`,
+        `${import.meta.env.VITE_API_URL}/api/friends/status/${id}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,

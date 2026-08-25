@@ -80,7 +80,7 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
   const fetchPendingRequests = async () => {
     try {
       const response = await fetch(
-        "http://localhost:8080/api/friends/requests",
+        `${import.meta.env.VITE_API_URL}/api/friends/requests`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -99,7 +99,7 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
   const fetchLikeNotifications = async () => {
     try {
       const response = await fetch(
-        "http://localhost:8080/api/posts/notifications/likes",
+        `${import.meta.env.VITE_API_URL}/api/posts/notifications/likes`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -117,7 +117,7 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
   const fetchCommentNotifications = async () => {
     try {
       const response = await fetch(
-        "http://localhost:8080/api/posts/notifications/comments",
+        `${import.meta.env.VITE_API_URL}/api/posts/notifications/comments`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -134,11 +134,14 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
 
   const fetchInboxUsers = async () => {
     try {
-      const response = await fetch("http://localhost:8080/api/messages/inbox", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/messages/inbox`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
         },
-      });
+      );
 
       const data = await response.json();
 
@@ -177,7 +180,7 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
 
     try {
       const response = await fetch(
-        `http://localhost:8080/api/users/search?keyword=${keyword}`,
+        `${import.meta.env.VITE_API_URL}/api/users/search?keyword=${keyword}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -624,7 +627,7 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
                     );
 
                     fetch(
-                      `http://localhost:8080/api/messages/read/${user.userId}`,
+                      `${import.meta.env.VITE_API_URL}/api/messages/read/${user.userId}`,
                       {
                         method: "PUT",
                         headers: {

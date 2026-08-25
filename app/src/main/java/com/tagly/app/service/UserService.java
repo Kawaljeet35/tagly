@@ -1,5 +1,6 @@
 package com.tagly.app.service;
 
+import com.tagly.app.config.MinioProperties;
 import com.tagly.app.dto.UserResponse;
 import com.tagly.app.repository.UserRepository;
 import io.minio.MinioClient;
@@ -17,12 +18,14 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final MinioClient minioClient;
+    private final MinioProperties minioProperties;
 
     public UserService(UserRepository userRepository,
-                       MinioClient minioClient) {
+                       MinioClient minioClient, MinioProperties minioProperties) {
 
         this.userRepository = userRepository;
         this.minioClient = minioClient;
+        this.minioProperties = minioProperties;
     }
 
     public UserResponse getCurrentUser(String username) {
@@ -53,14 +56,18 @@ public class UserService {
         try {
             minioClient.putObject(
                     PutObjectArgs.builder()
-                            .bucket("tagly-posts")
+                            .bucket(minioProperties.getBucket())
                             .object(fileName)
                             .stream(file.getInputStream(), file.getSize(), -1)
                             .contentType(file.getContentType())
                             .build()
             );
             String profilePictureUrl =
-                    "http://127.0.0.1:9000/tagly-posts/" + fileName;
+                    minioProperties.getEndpoint()
+                            + "/"
+                            + minioProperties.getBucket()
+                            + "/"
+                            + fileName;
             ourUser.setProfilePictureUrl(profilePictureUrl);
             userRepository.save(ourUser);
         } catch (Exception e) {

@@ -1,5 +1,6 @@
 package com.tagly.app.service;
 
+import com.tagly.app.config.MinioProperties;
 import com.tagly.app.dto.PostResponse;
 import com.tagly.app.entity.Like;
 import com.tagly.app.entity.Post;
@@ -24,14 +25,16 @@ public class PostService {
     private final MinioClient minioClient;
     private final FriendRequestRepository friendRequestRepository;
     private final CommentRepository commentRepository;
+    private final MinioProperties minioProperties;
 
-    public PostService(UserRepository userRepository, PostRepository postRepository, LikeRepository likeRepository, MinioClient minioClient, FriendRequestRepository friendRequestRepository, CommentRepository commentRepository){
+    public PostService(UserRepository userRepository, PostRepository postRepository, LikeRepository likeRepository, MinioClient minioClient, FriendRequestRepository friendRequestRepository, CommentRepository commentRepository, MinioProperties minioProperties){
         this.userRepository = userRepository;
         this.postRepository = postRepository;
         this.likeRepository = likeRepository;
         this.minioClient = minioClient;
         this.friendRequestRepository = friendRequestRepository;
         this.commentRepository = commentRepository;
+        this.minioProperties = minioProperties;
     }
 
     public void createPost(String content, String username, MultipartFile file){
@@ -48,14 +51,18 @@ public class PostService {
             try {
                 minioClient.putObject(
                         PutObjectArgs.builder()
-                                .bucket("tagly-posts")
+                                .bucket(minioProperties.getBucket())
                                 .object(fileName)
                                 .stream(file.getInputStream(), file.getSize(), -1)
                                 .contentType(file.getContentType())
                                 .build()
                 );
 
-                mediaUrl = "http://127.0.0.1:9000/tagly-posts/" + fileName;
+                mediaUrl =  minioProperties.getEndpoint()
+                        + "/"
+                        + minioProperties.getBucket()
+                        + "/"
+                        + fileName;
 
             } catch (Exception e) {
                 throw new RuntimeException("Error uploading file", e);

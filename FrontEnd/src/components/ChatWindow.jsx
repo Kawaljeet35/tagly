@@ -11,7 +11,7 @@ export default function ChatWindow({ userId, userName }) {
   const fetchMessages = async () => {
     try {
       const response = await fetch(
-        `http://localhost:8080/api/messages/${userId}`,
+        `${import.meta.env.VITE_API_URL}/api/messages/${userId}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -40,7 +40,7 @@ export default function ChatWindow({ userId, userName }) {
 
     try {
       const response = await fetch(
-        `http://localhost:8080/api/messages/${userId}`,
+        `${import.meta.env.VITE_API_URL}/api/messages/${userId}`,
         {
           method: "POST",
           headers: {

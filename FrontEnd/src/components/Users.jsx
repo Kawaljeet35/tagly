@@ -7,11 +7,14 @@ export default function Users({ handleLogout, profilePictureUrl }) {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch("http://localhost:8080/api/users", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/users`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
         },
-      });
+      );
 
       const data = await response.json();
 

@@ -30,7 +30,7 @@ export default function ProfileTop({
     formData.append("file", selectedFile);
     try {
       const response = await fetch(
-        "http://localhost:8080/api/users/profile-picture",
+        `${import.meta.env.VITE_API_URL}/api/users/profile-picture`,
         {
           method: "POST",
           headers: {
@@ -58,7 +58,7 @@ export default function ProfileTop({
   const sendFriendRequest = async () => {
     try {
       const response = await fetch(
-        `http://localhost:8080/api/friends/request/${userId}`,
+        `${import.meta.env.VITE_API_URL}/api/friends/request/${userId}`,
         {
           method: "POST",
           headers: {
@@ -79,7 +79,7 @@ export default function ProfileTop({
   const acceptFriendRequest = async () => {
     try {
       const response = await fetch(
-        "http://localhost:8080/api/friends/requests",
+        `${import.meta.env.VITE_API_URL}/api/friends/requests`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -94,7 +94,7 @@ export default function ProfileTop({
       if (!request) return;
 
       const acceptResponse = await fetch(
-        `http://localhost:8080/api/friends/accept/${request.id}`,
+        `${import.meta.env.VITE_API_URL}/api/friends/accept/${request.id}`,
         {
           method: "PUT",
           headers: {
