@@ -10,6 +10,9 @@ import com.tagly.app.entity.Comment;
 import com.tagly.app.repository.*;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDateTime;
@@ -22,16 +25,16 @@ public class PostService {
     private final UserRepository userRepository;
     private final PostRepository postRepository;
     private final LikeRepository likeRepository;
-    private final MinioClient minioClient;
+    private final S3Client s3Client;
     private final FriendRequestRepository friendRequestRepository;
     private final CommentRepository commentRepository;
     private final MinioProperties minioProperties;
 
-    public PostService(UserRepository userRepository, PostRepository postRepository, LikeRepository likeRepository, MinioClient minioClient, FriendRequestRepository friendRequestRepository, CommentRepository commentRepository, MinioProperties minioProperties){
+    public PostService(UserRepository userRepository, PostRepository postRepository, LikeRepository likeRepository, S3Client s3Client, FriendRequestRepository friendRequestRepository, CommentRepository commentRepository, MinioProperties minioProperties){
         this.userRepository = userRepository;
         this.postRepository = postRepository;
         this.likeRepository = likeRepository;
-        this.minioClient = minioClient;
+        this.s3Client = s3Client;
         this.friendRequestRepository = friendRequestRepository;
         this.commentRepository = commentRepository;
         this.minioProperties = minioProperties;
@@ -49,20 +52,26 @@ public class PostService {
             String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
 
             try {
-                minioClient.putObject(
-                        PutObjectArgs.builder()
+                PutObjectRequest putObjectRequest =
+                        PutObjectRequest.builder()
                                 .bucket(minioProperties.getBucket())
-                                .object(fileName)
-                                .stream(file.getInputStream(), file.getSize(), -1)
+                                .key(fileName)
                                 .contentType(file.getContentType())
-                                .build()
+                                .build();
+
+                s3Client.putObject(
+                        putObjectRequest,
+                        RequestBody.fromInputStream(
+                                file.getInputStream(),
+                                file.getSize()
+                        )
                 );
 
-                mediaUrl =  minioProperties.getEndpoint()
-                        + "/"
-                        + minioProperties.getBucket()
-                        + "/"
-                        + fileName;
+                mediaUrl =
+                        "https://paqfjtztcsowsxbwwvqh.supabase.co/storage/v1/object/public/"
+                                + minioProperties.getBucket()
+                                + "/"
+                                + fileName;
 
             } catch (Exception e) {
                 throw new RuntimeException("Error uploading file", e);

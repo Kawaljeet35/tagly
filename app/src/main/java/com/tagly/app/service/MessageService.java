@@ -5,12 +5,17 @@ import com.tagly.app.entity.User;
 import com.tagly.app.entity.Message;
 import com.tagly.app.repository.MessageRepository;
 import com.tagly.app.repository.UserRepository;
+
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.*;
-import io.minio.MinioClient;
+
 import com.tagly.app.dto.InboxItemDTO;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -19,13 +24,18 @@ public class MessageService {
 
     private final MessageRepository messageRepository;
     private final UserRepository userRepository;
-    private final MinioClient minioClient;
+    private final S3Client s3Client;
     private final MinioProperties minioProperties;
 
-    public MessageService(MessageRepository messageRepository, UserRepository userRepository, MinioClient minioClient, MinioProperties minioProperties) {
+    public MessageService(
+            MessageRepository messageRepository,
+            UserRepository userRepository,
+            S3Client s3Client,
+            MinioProperties minioProperties
+    ) {
         this.messageRepository = messageRepository;
         this.userRepository = userRepository;
-        this.minioClient = minioClient;
+        this.s3Client = s3Client;
         this.minioProperties = minioProperties;
     }
 
@@ -70,24 +80,23 @@ public class MessageService {
 
             try {
 
-                minioClient.putObject(
-                        PutObjectArgs.builder()
+                PutObjectRequest putObjectRequest =
+                        PutObjectRequest.builder()
                                 .bucket(minioProperties.getBucket())
-                                .object(fileName)
-                                .stream(
-                                        file.getInputStream(),
-                                        file.getSize(),
-                                        -1
-                                )
-                                .contentType(
-                                        file.getContentType()
-                                )
-                                .build()
+                                .key(fileName)
+                                .contentType(file.getContentType())
+                                .build();
+
+                s3Client.putObject(
+                        putObjectRequest,
+                        RequestBody.fromInputStream(
+                                file.getInputStream(),
+                                file.getSize()
+                        )
                 );
 
                 imageUrl =
-                        minioProperties.getEndpoint()
-                                + "/"
+                        "https://paqfjtztcsowsxbwwvqh.supabase.co/storage/v1/object/public/"
                                 + minioProperties.getBucket()
                                 + "/"
                                 + fileName;

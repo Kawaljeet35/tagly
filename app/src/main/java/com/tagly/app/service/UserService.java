@@ -5,6 +5,9 @@ import com.tagly.app.dto.UserResponse;
 import com.tagly.app.repository.UserRepository;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import com.tagly.app.entity.User;
@@ -17,14 +20,14 @@ import com.tagly.app.dto.UserResponse;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final MinioClient minioClient;
+    private final S3Client s3Client;
     private final MinioProperties minioProperties;
 
     public UserService(UserRepository userRepository,
-                       MinioClient minioClient, MinioProperties minioProperties) {
+                       S3Client s3Client, MinioProperties minioProperties) {
 
         this.userRepository = userRepository;
-        this.minioClient = minioClient;
+        this.s3Client = s3Client;
         this.minioProperties = minioProperties;
     }
 
@@ -54,17 +57,21 @@ public class UserService {
         User ourUser = user.get();
         String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
         try {
-            minioClient.putObject(
-                    PutObjectArgs.builder()
+            PutObjectRequest putObjectRequest =
+                    PutObjectRequest.builder()
                             .bucket(minioProperties.getBucket())
-                            .object(fileName)
-                            .stream(file.getInputStream(), file.getSize(), -1)
+                            .key(fileName)
                             .contentType(file.getContentType())
-                            .build()
+                            .build();
+
+            s3Client.putObject(
+                    putObjectRequest,
+                    RequestBody.fromBytes(
+                            file.getBytes()
+                    )
             );
             String profilePictureUrl =
-                    minioProperties.getEndpoint()
-                            + "/"
+                    "https://paqfjtztcsowsxbwwvqh.supabase.co/storage/v1/object/public/"
                             + minioProperties.getBucket()
                             + "/"
                             + fileName;
