@@ -92,26 +92,28 @@ export default function Home({ handleLogout }) {
       {isUploadVisible && (
         <UploadOverlay closeUpload={closeUpload} onPostCreated={fetchPosts} />
       )}
-      {posts.map((post, index) => {
-        return (
-          <Posts
-            key={post.id}
-            id={post.id}
-            name={post.name}
-            likedByCurrentUser={post.likedByCurrentUser}
-            content={post.content}
-            createdAt={formatTimestamp(post.createdAt)}
-            mediaUrl={post.mediaUrl}
-            mediaType={post.mediaType}
-            likesCount={post.likesCount}
-            commentsCount={post.commentsCount}
-            profilePictureUrl={post.profilePictureUrl}
-            username={post.username}
-            currentUsername={user?.username}
-            onDelete={fetchPosts}
-          />
-        );
-      })}
+      <div className="pb-[10px]">
+        {posts.map((post, index) => {
+          return (
+            <Posts
+              key={post.id}
+              id={post.id}
+              name={post.name}
+              likedByCurrentUser={post.likedByCurrentUser}
+              content={post.content}
+              createdAt={formatTimestamp(post.createdAt)}
+              mediaUrl={post.mediaUrl}
+              mediaType={post.mediaType}
+              likesCount={post.likesCount}
+              commentsCount={post.commentsCount}
+              profilePictureUrl={post.profilePictureUrl}
+              username={post.username}
+              currentUsername={user?.username}
+              onDelete={fetchPosts}
+            />
+          );
+        })}
+      </div>
     </>
   );
 }
