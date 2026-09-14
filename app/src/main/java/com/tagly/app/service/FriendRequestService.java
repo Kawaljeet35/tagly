@@ -6,6 +6,7 @@ import com.tagly.app.repository.FriendRequestRepository;
 import com.tagly.app.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -41,6 +42,7 @@ public class FriendRequestService {
         request.setSender(sender);
         request.setReceiver(receiver);
         request.setStatus("PENDING");
+        request.setCreatedAt(LocalDateTime.now());
 
         friendRequestRepository.save(request);
     }
@@ -50,7 +52,7 @@ public class FriendRequestService {
         User receiver = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        return friendRequestRepository.findByReceiverAndStatus(
+        return friendRequestRepository.findByReceiverAndStatusOrderByCreatedAtDesc(
                 receiver,
                 "PENDING"
         );

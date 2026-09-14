@@ -306,7 +306,7 @@ public class PostService {
                 );
 
         return likeRepository
-                .findByPostUserAndUserNotOrderByIdDesc(
+                .findByPostUserAndUserNotOrderByCreatedAtDesc(
                         user,
                         user
                 );

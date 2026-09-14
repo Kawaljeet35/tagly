@@ -5,6 +5,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 
 public class FriendRequest {
@@ -20,6 +22,8 @@ public class FriendRequest {
     private User receiver;
 
     private String status;
+
+    private LocalDateTime createdAt;
 
     public Long getId() {
         return id;
@@ -51,5 +55,13 @@ public class FriendRequest {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 }

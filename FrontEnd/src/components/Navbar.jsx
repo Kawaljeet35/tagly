@@ -33,6 +33,13 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
   const navigate = useNavigate();
 
   const allNotifications = [
+    ...pendingRequests.map((request) => ({
+      id: `friend-${request.id}`,
+      type: "friendRequest",
+      user: request.sender,
+      createdAt: request.createdAt,
+    })),
+
     ...likeNotifications.map((like) => ({
       id: `like-${like.id}`,
       type: "like",
@@ -89,7 +96,6 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
       );
 
       const data = await response.json();
-
       setPendingRequests(data);
     } catch (error) {
       console.error(error);
@@ -536,33 +542,27 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
           <div className="absolute right-0 top-14 w-72 max-h-96 overflow-y-auto bg-white shadow-lg rounded-xl border z-50">
             <div className="p-3 border-b font-semibold">Notifications</div>
 
-            {pendingRequests.length === 0 ? (
+            {allNotifications.length === 0 ? (
               <p className="p-4 text-gray-500 text-sm">No notifications</p>
             ) : (
-              pendingRequests.map((request) => (
-                <div key={request.id} className="p-3 border-b hover:bg-gray-50">
+              allNotifications.map((notification) => (
+                <div
+                  key={notification.id}
+                  className="p-3 border-b hover:bg-gray-50"
+                >
                   <p className="text-sm">
-                    <span className="font-semibold">{request.sender.name}</span>{" "}
-                    sent you a friend request
+                    <span className="font-semibold">
+                      {notification.user.name || notification.user.username}
+                    </span>{" "}
+                    {notification.type === "friendRequest"
+                      ? "sent you a friend request"
+                      : notification.type === "like"
+                        ? "liked your post"
+                        : "commented on your post"}
                   </p>
                 </div>
               ))
             )}
-            {allNotifications.map((notification) => (
-              <div
-                key={notification.id}
-                className="p-3 border-b hover:bg-gray-50"
-              >
-                <p className="text-sm">
-                  <span className="font-semibold">
-                    {notification.user.name || notification.user.username}
-                  </span>{" "}
-                  {notification.type === "like"
-                    ? "liked your post"
-                    : "commented on your post"}
-                </p>
-              </div>
-            ))}
           </div>
         )}
 

@@ -9,9 +9,13 @@ import com.tagly.app.entity.User;
 
 public interface FriendRequestRepository extends JpaRepository<FriendRequest, Long> {
     Optional<FriendRequest> findBySenderAndReceiver(User sender, User receiver);
-    List<FriendRequest> findByReceiverAndStatus(User receiver, String status);
+    List<FriendRequest> findByReceiverAndStatusOrderByCreatedAtDesc(
+            User receiver,
+            String status
+    );
     Optional<FriendRequest> findById(Long id);
     Optional<FriendRequest> findByReceiverAndSender(User receiver, User sender);
     List<FriendRequest> findBySenderAndStatus(User sender, String status);
+    List<FriendRequest> findByReceiverAndStatus(User receiver, String status);
     Optional<FriendRequest> findByIdAndStatus(Long id, String status);
 }
