@@ -68,6 +68,18 @@ public class FriendRequestService {
         friendRequestRepository.save(request);
     }
 
+    public void declineRequest(Long requestId) {
+
+        FriendRequest request = friendRequestRepository.findById(requestId)
+                .orElseThrow(() -> new RuntimeException("Request not found"));
+
+        if (!request.getStatus().equals("PENDING")) {
+            throw new RuntimeException("Request is not pending");
+        }
+
+        friendRequestRepository.delete(request);
+    }
+
     public List<FriendRequest> getFriends(String username) {
 
         User user = userRepository.findByUsername(username)

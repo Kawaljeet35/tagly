@@ -50,6 +50,16 @@ public class FriendRequestController {
         return ResponseEntity.ok("Friend request accepted");
     }
 
+    @DeleteMapping("/decline/{requestId}")
+    public ResponseEntity<String> declineRequest(
+            @PathVariable Long requestId
+    ) {
+
+        friendRequestService.declineRequest(requestId);
+
+        return ResponseEntity.ok("Friend request declined");
+    }
+
     @GetMapping("/all")
     public ResponseEntity<List<FriendRequest>> getFriends() {
 
@@ -88,5 +98,4 @@ public class FriendRequestController {
 
         return ResponseEntity.ok("Friend removed");
     }
-
 }

@@ -65,6 +65,28 @@ export default function Friends({ handleLogout, profilePictureUrl }) {
     }
   };
 
+  const declineRequest = async (requestId) => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/friends/decline/${requestId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to decline friend request");
+      }
+
+      fetchFriendRequests();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const fetchCurrentUser = async () => {
     try {
       const response = await fetch(
@@ -114,99 +136,172 @@ export default function Friends({ handleLogout, profilePictureUrl }) {
         profilePictureUrl={currentUser?.profilePictureUrl}
       />
 
-      <div className="mt-20 p-4">
-        <h1 className="text-2xl font-bold">Friends Page</h1>
-        <p className="mt-4">Pending Requests: {requests.length}</p>
+      <main className="pt-[80px] pb-10 px-4">
+        <div className="max-w-5xl mx-auto">
+          {/* Page Header */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900">Friends</h1>
+            <p className="text-gray-500 mt-1">
+              Manage your friend requests and connections
+            </p>
+          </div>
 
-        <p className="mt-2">Total Friends: {friends.length}</p>
-        <div className="mt-6">
-          <h2 className="text-xl font-bold mb-2">Friend Requests</h2>
-
-          {requests.map((request) => (
-            <div
-              key={request.id}
-              className="flex items-center gap-3 mb-3 bg-stone-100 p-3 rounded"
-            >
-              <img
-                src={request.sender.profilePictureUrl}
-                alt="profile"
-                className="w-12 h-12 rounded-full object-cover"
-              />
-
-              <div>
-                <p className="font-semibold">{request.sender.name}</p>
-
-                <p className="text-sm text-gray-600">
-                  @{request.sender.username}
-                </p>
-              </div>
-              <button
-                onClick={() => acceptRequest(request.id)}
-                className="mt-2 bg-teal-600 text-white px-3 py-1 rounded"
-              >
-                Accept
-              </button>
+          {/* Summary Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+            <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+              <p className="text-sm text-gray-500">Pending Requests</p>
+              <p className="text-3xl font-bold text-teal-600 mt-1">
+                {requests.length}
+              </p>
             </div>
-          ))}
+
+            <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+              <p className="text-sm text-gray-500">Total Friends</p>
+              <p className="text-3xl font-bold text-gray-900 mt-1">
+                {friends.length}
+              </p>
+            </div>
+          </div>
+
+          {/* Friend Requests */}
+          <section className="bg-white border border-gray-200 rounded-xl shadow-sm mb-8 overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h2 className="text-xl font-bold text-gray-900">
+                Friend Requests
+              </h2>
+
+              <p className="text-sm text-gray-500 mt-1">
+                People who want to connect with you
+              </p>
+            </div>
+
+            <div className="p-6">
+              {requests.length === 0 ? (
+                <p className="text-gray-500 text-sm">
+                  You don't have any pending friend requests.
+                </p>
+              ) : (
+                requests.map((request) => (
+                  <div
+                    key={request.id}
+                    className="flex items-center gap-4 py-4 border-b border-gray-100 last:border-b-0"
+                  >
+                    <img
+                      src={request.sender.profilePictureUrl}
+                      alt="profile"
+                      className="w-14 h-14 rounded-full object-cover"
+                    />
+
+                    <div className="flex-1">
+                      <p className="font-semibold text-gray-900">
+                        {request.sender.name}
+                      </p>
+
+                      <p className="text-sm text-gray-500">
+                        @{request.sender.username}
+                      </p>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => acceptRequest(request.id)}
+                        className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg"
+                      >
+                        Accept
+                      </button>
+
+                      <button
+                        onClick={() => declineRequest(request.id)}
+                        className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg"
+                      >
+                        Decline
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
+
+          {/* Friends */}
+          <section className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h2 className="text-xl font-bold text-gray-900">Friends</h2>
+              <p className="text-sm text-gray-500 mt-1">
+                People you're connected with
+              </p>
+            </div>
+
+            <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {friends.length === 0 ? (
+                <p className="text-gray-500 text-sm">
+                  You don't have any friends yet.
+                </p>
+              ) : (
+                friends.map((friend) => {
+                  const friendUser =
+                    friend.sender.id === currentUser?.id
+                      ? friend.receiver
+                      : friend.sender;
+
+                  return (
+                    <div
+                      key={friend.id}
+                      onClick={() => navigate(`/users/${friendUser.id}`)}
+                      className="border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow cursor-pointer"
+                    >
+                      <div className="flex flex-col items-center text-center">
+                        <img
+                          src={friendUser.profilePictureUrl}
+                          alt="profile"
+                          className="w-20 h-20 rounded-full object-cover mb-3"
+                        />
+
+                        <p className="font-semibold text-gray-900">
+                          {friendUser.name}
+                        </p>
+
+                        <p className="text-sm text-gray-500">
+                          @{friendUser.username}
+                        </p>
+
+                        <div className="flex gap-2 mt-4">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/messages/${friendUser.id}`);
+                            }}
+                            className="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-lg text-sm"
+                          >
+                            Message
+                          </button>
+
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+
+                              const confirmed = window.confirm(
+                                `Remove ${friendUser.name} from friends?`,
+                              );
+
+                              if (confirmed) {
+                                unfriend(friend.id);
+                              }
+                            }}
+                            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm"
+                          >
+                            Unfriend
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </section>
         </div>
-        <div className="mt-8">
-          <h2 className="text-xl font-bold mb-2">Friends</h2>
-          {friends.map((friend) => {
-            console.log(friend);
-            const friendUser =
-              friend.sender.id === currentUser?.id
-                ? friend.receiver
-                : friend.sender;
-
-            return (
-              <div
-                key={friend.id}
-                onClick={() => navigate(`/users/${friendUser.id}`)}
-                className="inline-flex items-center gap-3 mb-3 bg-stone-100 p-3 rounded cursor-pointer hover:bg-stone-200"
-              >
-                <img
-                  src={friendUser.profilePictureUrl}
-                  alt="profile"
-                  className="w-12 h-12 rounded-full object-cover"
-                />
-
-                <div>
-                  <p className="font-semibold">{friendUser.name}</p>
-
-                  <p className="text-sm text-gray-600">
-                    @{friendUser.username}
-                  </p>
-                </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate(`/messages/${friendUser.id}`);
-                  }}
-                  className="bg-cyan-600 text-white px-3 py-1 rounded text-sm"
-                >
-                  Message
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-
-                    const confirmed = window.confirm(
-                      `Remove ${friendUser.name} from friends?`,
-                    );
-
-                    if (confirmed) {
-                      unfriend(friend.id);
-                    }
-                  }}
-                  className="bg-red-600 text-white px-3 py-1 rounded text-sm ml-2"
-                >
-                  Unfriend
-                </button>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      </main>
     </>
   );
 }
