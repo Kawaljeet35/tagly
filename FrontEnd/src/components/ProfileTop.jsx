@@ -11,6 +11,8 @@ export default function ProfileTop({
   isOwnProfile,
   friendshipStatus,
   fetchFriendshipStatus,
+  activeTab,
+  setActiveTab,
 }) {
   const [isPopupVisible, setPopupVisible] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -119,96 +121,110 @@ export default function ProfileTop({
           backgroundImage: 'url("https://wallpapercave.com/wp/wp3246092.jpg")',
         }}
       >
-        <button onClick={() => setPopupVisible(true)}>
+        {isOwnProfile ? (
+          <button onClick={() => setPopupVisible(true)}>
+            <img
+              src={profilePictureUrl || pic}
+              alt="Profile Pic"
+              className="h-44 w-44 absolute object-cover bg-red-800 rounded-full bottom-0 transform translate-y-1/2 translate-x-1/4 border-[4px] border-white overflow-hidden"
+            />
+          </button>
+        ) : (
           <img
             src={profilePictureUrl || pic}
             alt="Profile Pic"
             className="h-44 w-44 absolute object-cover bg-red-800 rounded-full bottom-0 transform translate-y-1/2 translate-x-1/4 border-[4px] border-white overflow-hidden"
           />
-        </button>
-        <button className="absolute right-8 bottom-4 flex gap-2 items-center bg-stone-100 hover:bg-stone-200 py-2 px-4 rounded-md">
-          <svg
-            viewBox="0 -2 32 32"
-            className="h-5 w-5"
-            version="1.1"
-            xmlns="http://www.w3.org/2000/svg"
-            xmlns:xlink="http://www.w3.org/1999/xlink"
-            xmlns:sketch="http://www.bohemiancoding.com/sketch/ns"
-            fill="#000000"
-          >
-            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-            <g
-              id="SVGRepo_tracerCarrier"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            ></g>
-            <g id="SVGRepo_iconCarrier">
-              {" "}
-              <title>camera</title> <desc>Created with Sketch Beta.</desc>{" "}
-              <defs> </defs>{" "}
+        )}
+
+        {isOwnProfile && (
+          <button className="absolute right-8 bottom-4 flex gap-2 items-center bg-stone-100 hover:bg-stone-200 py-2 px-4 rounded-md">
+            <svg
+              viewBox="0 -2 32 32"
+              className="h-5 w-5"
+              version="1.1"
+              xmlns="http://www.w3.org/2000/svg"
+              xmlns:xlink="http://www.w3.org/1999/xlink"
+              xmlns:sketch="http://www.bohemiancoding.com/sketch/ns"
+              fill="#000000"
+            >
+              <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
               <g
-                id="Page-1"
-                stroke="none"
-                stroke-width="1"
-                fill="none"
-                fill-rule="evenodd"
-                sketch:type="MSPage"
-              >
+                id="SVGRepo_tracerCarrier"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              ></g>
+              <g id="SVGRepo_iconCarrier">
                 {" "}
+                <title>camera</title> <desc>Created with Sketch Beta.</desc>{" "}
+                <defs> </defs>{" "}
                 <g
-                  id="Icon-Set-Filled"
-                  sketch:type="MSLayerGroup"
-                  transform="translate(-258.000000, -467.000000)"
-                  fill="#000000"
+                  id="Page-1"
+                  stroke="none"
+                  stroke-width="1"
+                  fill="none"
+                  fill-rule="evenodd"
+                  sketch:type="MSPage"
                 >
                   {" "}
-                  <path
-                    d="M286,471 L283,471 L282,469 C281.411,467.837 281.104,467 280,467 L268,467 C266.896,467 266.53,467.954 266,469 L265,471 L262,471 C259.791,471 258,472.791 258,475 L258,491 C258,493.209 259.791,495 262,495 L286,495 C288.209,495 290,493.209 290,491 L290,475 C290,472.791 288.209,471 286,471 Z M274,491 C269.582,491 266,487.418 266,483 C266,478.582 269.582,475 274,475 C278.418,475 282,478.582 282,483 C282,487.418 278.418,491 274,491 Z M274,477 C270.687,477 268,479.687 268,483 C268,486.313 270.687,489 274,489 C277.313,489 280,486.313 280,483 C280,479.687 277.313,477 274,477 L274,477 Z"
-                    id="camera"
-                    sketch:type="MSShapeGroup"
+                  <g
+                    id="Icon-Set-Filled"
+                    sketch:type="MSLayerGroup"
+                    transform="translate(-258.000000, -467.000000)"
+                    fill="#000000"
                   >
                     {" "}
-                  </path>{" "}
+                    <path
+                      d="M286,471 L283,471 L282,469 C281.411,467.837 281.104,467 280,467 L268,467 C266.896,467 266.53,467.954 266,469 L265,471 L262,471 C259.791,471 258,472.791 258,475 L258,491 C258,493.209 259.791,495 262,495 L286,495 C288.209,495 290,493.209 290,491 L290,475 C290,472.791 288.209,471 286,471 Z M274,491 C269.582,491 266,487.418 266,483 C266,478.582 269.582,475 274,475 C278.418,475 282,478.582 282,483 C282,487.418 278.418,491 274,491 Z M274,477 C270.687,477 268,479.687 268,483 C268,486.313 270.687,489 274,489 C277.313,489 280,486.313 280,483 C280,479.687 277.313,477 274,477 L274,477 Z"
+                      id="camera"
+                      sketch:type="MSShapeGroup"
+                    >
+                      {" "}
+                    </path>{" "}
+                  </g>{" "}
                 </g>{" "}
-              </g>{" "}
-            </g>
-          </svg>
-          <span className="font-medium">Add Cover Photo</span>
-        </button>
+              </g>
+            </svg>
+            <span className="font-medium">Add Cover Photo</span>
+          </button>
+        )}
 
         <div className="flex items-center justify-between gap-[108px] absolute -bottom-[72px] right-0">
           <span className="font-bold text-2xl">{name}</span>
           <div className="flex items-center justify-between gap-2">
-            <button className="rounded-md bg-blue-600 py-2 px-3 flex items-center justify-between gap-1">
-              <svg
-                className="w-6 h-6"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                <g
-                  id="SVGRepo_tracerCarrier"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                ></g>
-                <g id="SVGRepo_iconCarrier">
-                  {" "}
-                  <g id="Edit / Add_Plus">
+            {isOwnProfile && (
+              <button className="rounded-md bg-blue-600 py-2 px-3 flex items-center justify-between gap-1">
+                <svg
+                  className="w-6 h-6"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+                  <g
+                    id="SVGRepo_tracerCarrier"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  ></g>
+                  <g id="SVGRepo_iconCarrier">
                     {" "}
-                    <path
-                      id="Vector"
-                      d="M6 12H12M12 12H18M12 12V18M12 12V6"
-                      stroke="#ffffff"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    ></path>{" "}
-                  </g>{" "}
-                </g>
-              </svg>
-              <span className="text-white">Add to story</span>
-            </button>
+                    <g id="Edit / Add_Plus">
+                      {" "}
+                      <path
+                        id="Vector"
+                        d="M6 12H12M12 12H18M12 12V18M12 12V6"
+                        stroke="#ffffff"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      ></path>{" "}
+                    </g>{" "}
+                  </g>
+                </svg>
+                <span className="text-white">Add to story</span>
+              </button>
+            )}
+
             {isOwnProfile ? (
               <button className="rounded-md bg-gray-300 py-2 px-3 flex items-center justify-between gap-1">
                 <svg
@@ -289,27 +305,47 @@ export default function ProfileTop({
         </div>
       </div>
       <hr className="w-[80%] max-w-4xl border-t-1 border-gray-400 mx-auto mt-[108px]"></hr>
-      <div className="w-[80%] max-w-4xl mx-auto flex justify-between items-center mt-2">
-        <ul className="flex items-center justify-around text-lg">
-          <li className="hover:bg-gray-300 py-2 px-4 rounded-md">
-            <a href="#">Posts</a>
+      <div className="w-[80%] max-w-4xl mx-auto flex justify-between items-center mt-2 bg-white rounded-xl shadow-sm px-2 py-2">
+        <ul className="flex items-center justify-start gap-2">
+          <li
+            className={`py-2 px-4 rounded-md ${
+              activeTab === "posts"
+                ? "bg-gray-200 font-semibold"
+                : "hover:bg-gray-300"
+            }`}
+          >
+            <button onClick={() => setActiveTab("posts")}>Posts</button>
           </li>
+
           <li className="hover:bg-gray-300 py-2 px-4 rounded-md">
             <a href="#">About</a>
           </li>
+
           <li className="hover:bg-gray-300 py-2 px-4 rounded-md">
-            <a href="#">Friends</a>
+            <button onClick={() => navigate(`/users/${userId}/friends`)}>
+              Friends
+            </button>
           </li>
+
+          <li
+            className={`py-2 px-4 rounded-md ${
+              activeTab === "photos"
+                ? "bg-gray-200 font-semibold"
+                : "hover:bg-gray-300"
+            }`}
+          >
+            <button onClick={() => setActiveTab("photos")}>Photos</button>
+          </li>
+
           <li className="hover:bg-gray-300 py-2 px-4 rounded-md">
-            <a href="#">Photos</a>
+            <button onClick={() => navigate("/videos")}>Videos</button>
           </li>
-          <li className="hover:bg-gray-300 py-2 px-4 rounded-md">
-            <a href="#">Videos</a>
-          </li>
+
           <li className="hover:bg-gray-300 py-2 px-4 rounded-md">
             <a href="#">More</a>
           </li>
         </ul>
+
         <button className="rounded-md bg-gray-300 px-4 py-2">
           <svg
             className="w-6 h-6"

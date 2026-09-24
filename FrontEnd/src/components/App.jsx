@@ -49,6 +49,10 @@ export default function App() {
               element={<Friends handleLogout={handleLogout} />}
             />
             <Route
+              path="/users/:id/friends"
+              element={<Friends handleLogout={handleLogout} />}
+            />
+            <Route
               path="/messages/:id"
               element={<Messages handleLogout={handleLogout} />}
             />

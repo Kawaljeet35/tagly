@@ -51,7 +51,7 @@ export default function UploadOverlay({ closeUpload, onPostCreated }) {
   };
 
   return (
-    <div className="overlay fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center">
+    <div className="overlay fixed inset-0 z-50 bg-black bg-opacity-80 flex items-center justify-center">
       <div className="upload-container bg-white rounded-lg shadow-lg p-4 gap-2 flex flex-col max-w-lg">
         <input
           type="file"

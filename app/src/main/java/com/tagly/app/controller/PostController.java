@@ -30,6 +30,21 @@ public class PostController {
         List<PostResponse> posts = postService.getAllPosts(userName);
         return posts;
     }
+    
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<PostResponse>> getPostsByUserId(
+            @PathVariable Long userId
+    ) {
+        String currentUsername =
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication()
+                        .getName();
+
+        return ResponseEntity.ok(
+                postService.getPostsByUserId(userId, currentUsername)
+        );
+    }
 
     @DeleteMapping("/{postId}")
     public ResponseEntity<?> deletePost(

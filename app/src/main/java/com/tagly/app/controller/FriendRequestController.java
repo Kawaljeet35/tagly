@@ -72,6 +72,16 @@ public class FriendRequestController {
         );
     }
 
+    @GetMapping("/all/{userId}")
+    public ResponseEntity<List<FriendRequest>> getFriendsByUserId(
+            @PathVariable Long userId
+    ) {
+
+        return ResponseEntity.ok(
+                friendRequestService.getFriendsByUserId(userId)
+        );
+    }
+
     @GetMapping("/status/{userId}")
     public ResponseEntity<String> getFriendshipStatus(
             @PathVariable Long userId

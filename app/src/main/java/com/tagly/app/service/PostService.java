@@ -118,6 +118,58 @@ public class PostService {
         }
     }
 
+    public List<PostResponse> getPostsByUserId(Long userId, String currentUsername) {
+
+        User profileUser = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        User currentUser = userRepository.findByUsername(currentUsername)
+                .orElseThrow(() -> new RuntimeException("Current user not found"));
+
+        List<Post> posts =
+                postRepository.findByUserOrderByCreatedAtDesc(profileUser);
+
+        List<PostResponse> responses = new ArrayList<>();
+
+        for (Post post : posts) {
+
+            PostResponse response = new PostResponse();
+
+            response.setId(post.getId());
+            response.setContent(post.getContent());
+
+            response.setUsername(post.getUser().getUsername());
+
+            response.setName(
+                    post.getUser().getName() != null
+                            ? post.getUser().getName()
+                            : post.getUser().getUsername()
+            );
+
+            response.setCreatedAt(post.getCreatedAt());
+
+            response.setLikesCount(post.getLikesCount());
+            response.setCommentsCount(post.getCommentsCount());
+
+            response.setMediaUrl(post.getMediaUrl());
+            response.setMediaType(post.getMediaType());
+
+            response.setLikedByCurrentUser(
+                    likeRepository
+                            .findByUserAndPost(currentUser, post)
+                            .isPresent()
+            );
+
+            response.setProfilePictureUrl(
+                    post.getUser().getProfilePictureUrl()
+            );
+
+            responses.add(response);
+        }
+
+        return responses;
+    }
+
     public List<PostResponse> getAllPosts(String username) {
         Optional<User> user = userRepository.findByUsername(username);
         if(user.isPresent()){

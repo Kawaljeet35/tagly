@@ -96,6 +96,22 @@ public class FriendRequestService {
         return sent;
     }
 
+    public List<FriendRequest> getFriendsByUserId(Long userId) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        List<FriendRequest> sent =
+                friendRequestRepository.findBySenderAndStatus(user, "ACCEPTED");
+
+        List<FriendRequest> received =
+                friendRequestRepository.findByReceiverAndStatus(user, "ACCEPTED");
+
+        sent.addAll(received);
+
+        return sent;
+    }
+
     public String getFriendshipStatus(String currentUsername, Long userId) {
 
         User currentUser = userRepository.findByUsername(currentUsername)
