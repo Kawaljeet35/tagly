@@ -219,8 +219,8 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
       setSelectedPage("Home");
     } else if (location.pathname === "/profile") {
       setSelectedPage("Profile");
-    } else if (location.pathname === "/videos") {
-      setSelectedPage("Videos");
+    } else if (location.pathname === "/discover") {
+      setSelectedPage("Discover");
     } else if (location.pathname === "/friends") {
       setSelectedPage("Friends");
     }
@@ -290,9 +290,6 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
             ></path>
           </g>
         </svg>
-        <Link to="/users" className="ml-4 text-teal-700 font-semibold">
-          Users
-        </Link>
       </div>
       {searchResults.length > 0 && (
         <div className="absolute top-12 left-0 w-72 bg-white border rounded-lg shadow-lg z-50">
@@ -400,13 +397,13 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
         </Link>
 
         <Link
-          to="/videos"
-          onMouseEnter={(e) => showTooltip("Videos", e)}
+          to="/discover"
+          onMouseEnter={(e) => showTooltip("Discover", e)}
           onMouseLeave={hideTooltip}
         >
           <div
             className={`p-2 rounded-full ${
-              selectedPage === "Videos" ? "bg-teal-200" : "bg-stone-200"
+              selectedPage === "Discover" ? "bg-teal-200" : "bg-stone-200"
             } hover:scale-110`}
           >
             <svg
@@ -414,22 +411,26 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
               className="w-6 h-6"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             >
-              <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
-              <g
-                id="SVGRepo_tracerCarrier"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              ></g>
-              <g id="SVGRepo_iconCarrier">
-                <path
-                  d="M16 10L18.5768 8.45392C19.3699 7.97803 19.7665 7.74009 20.0928 7.77051C20.3773 7.79703 20.6369 7.944 20.806 8.17433C21 8.43848 21 8.90095 21 9.8259V14.1741C21 15.099 21 15.5615 20.806 15.8257C20.6369 16.056 20.3773 16.203 20.0928 16.2295C19.7665 16.2599 19.3699 16.022 18.5768 15.5461L16 14M6.2 18H12.8C13.9201 18 14.4802 18 14.908 17.782C15.2843 17.5903 15.5903 17.2843 15.782 16.908C16 16.4802 16 15.9201 16 14.8V9.2C16 8.0799 16 7.51984 15.782 7.09202C15.5903 6.71569 15.2843 6.40973 14.908 6.21799C14.4802 6 13.9201 6 12.8 6H6.2C5.0799 6 4.51984 6 4.09202 6.21799C3.71569 6.40973 3.40973 6.71569 3.21799 7.09202C3 7.51984 3 8.07989 3 9.2V14.8C3 15.9201 3 16.4802 3.21799 16.908C3.40973 17.2843 3.71569 17.5903 4.09202 17.782C4.51984 18 5.07989 18 6.2 18Z"
-                  stroke="#000000"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                ></path>
-              </g>
+              <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+
+              <path d="M21 12a9 9 0 1 0 -9 9"></path>
+
+              <path d="M3.6 9h16.8"></path>
+
+              <path d="M3.6 15h7.9"></path>
+
+              <path d="M11.5 3a17 17 0 0 0 0 18"></path>
+
+              <path d="M12.5 3a16.984 16.984 0 0 1 2.574 8.62"></path>
+
+              <path d="M15 18a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path>
+
+              <path d="M20.2 20.2l1.8 1.8"></path>
             </svg>
           </div>
         </Link>

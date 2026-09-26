@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import Login from "./Login";
 import Home from "./Home";
 import Profile from "./Profile";
-import Videos from "./Videos";
+import DiscoverPage from "./DiscoverPage";
 import Friends from "./Friends";
 import Users from "./Users";
 import Messages from "./Messages";
@@ -41,8 +41,8 @@ export default function App() {
               element={<Profile handleLogout={handleLogout} />}
             />
             <Route
-              path="/videos"
-              element={<Videos handleLogout={handleLogout} />}
+              path="/discover"
+              element={<DiscoverPage handleLogout={handleLogout} />}
             />
             <Route
               path="/friends"
