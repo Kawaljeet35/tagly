@@ -18,6 +18,10 @@ export default function ProfileTop({
   const [selectedFile, setSelectedFile] = useState(null);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isCoverPopupVisible, setCoverPopupVisible] = useState(false);
+  const [selectedCoverFile, setSelectedCoverFile] = useState(null);
+  const [coverMessage, setCoverMessage] = useState("");
+  const [coverLoading, setCoverLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleProfilePictureUpload = async () => {
@@ -54,6 +58,50 @@ export default function ProfileTop({
       }
     } catch (error) {
       console.error(error);
+    }
+  };
+
+  const handleCoverPhotoUpload = async () => {
+    if (!selectedCoverFile) {
+      alert("Please select a file");
+      return;
+    }
+
+    setCoverLoading(true);
+
+    const formData = new FormData();
+    formData.append("file", selectedCoverFile);
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/users/cover-photo`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: formData,
+        },
+      );
+
+      if (response.ok) {
+        await fetchUser();
+        setCoverMessage("Cover photo uploaded");
+
+        setTimeout(() => {
+          setCoverPopupVisible(false);
+          setSelectedCoverFile(null);
+          setCoverMessage("");
+          setCoverLoading(false);
+        }, 1500);
+      } else {
+        setCoverMessage("Failed to upload cover photo");
+        setCoverLoading(false);
+      }
+    } catch (error) {
+      console.error(error);
+      setCoverMessage("Something went wrong");
+      setCoverLoading(false);
     }
   };
 
@@ -118,7 +166,9 @@ export default function ProfileTop({
       <div
         className="w-[80%] max-w-4xl bg-cover bg-center h-[400px] rounded-lg relative left-1/2 transform -translate-x-1/2"
         style={{
-          backgroundImage: 'url("https://wallpapercave.com/wp/wp3246092.jpg")',
+          backgroundImage: `url("${
+            coverPhotoUrl || "https://wallpapercave.com/wp/wp3246092.jpg"
+          }")`,
         }}
       >
         {isOwnProfile ? (
@@ -138,7 +188,10 @@ export default function ProfileTop({
         )}
 
         {isOwnProfile && (
-          <button className="absolute right-8 bottom-4 flex gap-2 items-center bg-stone-100 hover:bg-stone-200 py-2 px-4 rounded-md">
+          <button
+            onClick={() => setCoverPopupVisible(true)}
+            className="absolute right-8 bottom-4 flex gap-2 items-center bg-stone-100 hover:bg-stone-200 py-2 px-4 rounded-md"
+          >
             <svg
               viewBox="0 -2 32 32"
               className="h-5 w-5"
@@ -418,6 +471,51 @@ export default function ProfileTop({
               disabled={loading}
               className={`mt-2 px-4 py-2 rounded ${
                 loading ? "bg-gray-300" : "bg-red-600 hover:bg-red-700"
+              } text-white`}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+      {isCoverPopupVisible && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-4 rounded-lg">
+            <p>Upload Cover Photo</p>
+
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setSelectedCoverFile(e.target.files[0])}
+            />
+
+            {selectedCoverFile && (
+              <img
+                src={URL.createObjectURL(selectedCoverFile)}
+                alt="cover preview"
+                className="w-80 h-40 object-cover rounded-lg mt-2"
+              />
+            )}
+
+            {coverMessage && (
+              <p className="text-green-600 mt-2">{coverMessage}</p>
+            )}
+
+            <button
+              onClick={handleCoverPhotoUpload}
+              disabled={coverLoading}
+              className={`mt-2 px-4 py-2 rounded ${
+                coverLoading ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"
+              } text-white`}
+            >
+              {coverLoading ? "Uploading..." : "Upload"}
+            </button>
+
+            <button
+              onClick={() => !coverLoading && setCoverPopupVisible(false)}
+              disabled={coverLoading}
+              className={`mt-2 ml-2 px-4 py-2 rounded ${
+                coverLoading ? "bg-gray-300" : "bg-red-600 hover:bg-red-700"
               } text-white`}
             >
               Close

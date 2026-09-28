@@ -5,7 +5,6 @@ import jakarta.persistence.*;
 
 import java.util.List;
 
-
 @Entity
 @Table(name = "users")
 public class User {
@@ -30,6 +29,8 @@ public class User {
     private String email;
 
     private String profilePictureUrl;
+
+    private String coverPhotoUrl;
 
     @JsonIgnore
     @OneToMany(mappedBy = "sender")
@@ -85,6 +86,14 @@ public class User {
 
     public void setProfilePictureUrl(String profilePictureUrl) {
         this.profilePictureUrl = profilePictureUrl;
+    }
+
+    public String getCoverPhotoUrl() {
+        return coverPhotoUrl;
+    }
+
+    public void setCoverPhotoUrl(String coverPhotoUrl) {
+        this.coverPhotoUrl = coverPhotoUrl;
     }
 
     public List<FriendRequest> getSentRequests() {

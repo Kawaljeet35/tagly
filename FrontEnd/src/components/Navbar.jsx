@@ -30,6 +30,7 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
   const [minimizedChats, setMinimizedChats] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [searchResults, setSearchResults] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
   const navigate = useNavigate();
 
   const allNotifications = [
@@ -178,6 +179,25 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
     }
   };
 
+  const fetchCurrentUser = async () => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/users/me`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        },
+      );
+
+      const data = await response.json();
+
+      setCurrentUser(data);
+    } catch (error) {
+      console.error("Error fetching current user:", error);
+    }
+  };
+
   const searchUsers = async (keyword) => {
     if (!keyword.trim()) {
       setSearchResults([]);
@@ -196,7 +216,11 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
 
       const data = await response.json();
 
-      setSearchResults(Array.isArray(data) ? data : []);
+      const filteredResults = Array.isArray(data)
+        ? data.filter((user) => user.id !== currentUser?.id)
+        : [];
+
+      setSearchResults(filteredResults);
     } catch (error) {
       console.error(error);
     }
@@ -207,6 +231,7 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
     fetchLikeNotifications();
     fetchCommentNotifications();
     fetchInboxUsers();
+    fetchCurrentUser();
 
     const interval = setInterval(() => {
       fetchInboxUsers();
@@ -247,14 +272,13 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
 
   return (
     <nav className="fixed top-0 w-full bg-white flex items-center px-2 py-1 shadow z-10">
-      <a
-        href=""
+      <Link
+        to="/"
         className="flex items-center py-2 px-4 gap-2 hover:scale-110 flex-shrink-0"
-        onClick={(e) => e.preventDefault()}
       >
         <img src={CircularTaglyLogo} alt="Tagly Logo" className="w-8" />
         <img src={TaglyLogo} alt="Tagly Main Logo" className="w-20" />
-      </a>
+      </Link>
 
       <div className="relative">
         <input
@@ -268,6 +292,7 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
           }}
           className="input-default rounded-full px-2 py-1 pl-10 bg-stone-100 border-none text-lg"
         />
+
         <svg
           viewBox="0 0 24 24"
           fill="none"
@@ -290,26 +315,40 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
             ></path>
           </g>
         </svg>
+
+        {searchResults.length > 0 && (
+          <div className="absolute top-full left-0 mt-1 w-full bg-white border rounded-lg shadow-lg z-50">
+            {searchResults.map((user) => (
+              <div
+                key={user.id}
+                onClick={() => {
+                  navigate(`/users/${user.id}`);
+                  setSearchText("");
+                  setSearchResults([]);
+                }}
+                className="flex items-center gap-3 p-3 border-b hover:bg-gray-100 cursor-pointer"
+              >
+                <img
+                  src={user.profilePictureUrl}
+                  alt=""
+                  className="w-10 h-10 rounded-full object-cover"
+                />
+
+                <div>
+                  <p className="font-semibold text-base leading-6">
+                    {user.name}
+                  </p>
+
+                  <p className="text-sm text-gray-500 leading-5">
+                    @{user.username}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
-      {searchResults.length > 0 && (
-        <div className="absolute top-12 left-0 w-72 bg-white border rounded-lg shadow-lg z-50">
-          {searchResults.map((user) => (
-            <div
-              key={user.id}
-              onClick={() => {
-                navigate(`/users/${user.id}`);
-                setSearchText("");
-                setSearchResults([]);
-              }}
-              className="p-3 border-b hover:bg-gray-100 cursor-pointer"
-            >
-              <p className="font-semibold">{user.name}</p>
-              <p className="text-sm text-gray-500">@{user.username}</p>
-            </div>
-          ))}
-        </div>
-      )}
-      <div className="justify-center items-center ml-12 space-x-4 hidden lg:flex">
+      <div className="justify-center items-center ml-48 space-x-4 hidden lg:flex">
         <Link
           to="/"
           onMouseEnter={(e) => showTooltip("Home", e)}
@@ -437,7 +476,7 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
 
         <Link
           to="/friends"
-          onMouseEnter={(e) => showTooltip("Friends", e)}
+          onMouseEnter={(e) => showTooltip("My Friends", e)}
           onMouseLeave={hideTooltip}
         >
           <div

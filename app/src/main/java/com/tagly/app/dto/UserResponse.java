@@ -5,6 +5,7 @@ public class UserResponse {
     private String name;
     private String username;
     private String profilePictureUrl;
+    private String coverPhotoUrl;
     private Long id;
 
     public String getName() {
@@ -29,6 +30,14 @@ public class UserResponse {
 
     public void setProfilePictureUrl(String profilePictureUrl) {
         this.profilePictureUrl = profilePictureUrl;
+    }
+
+    public String getCoverPhotoUrl() {
+        return coverPhotoUrl;
+    }
+
+    public void setCoverPhotoUrl(String coverPhotoUrl) {
+        this.coverPhotoUrl = coverPhotoUrl;
     }
 
     public Long getId() {

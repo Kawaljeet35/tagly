@@ -47,6 +47,19 @@ public class UserController {
         return ResponseEntity.ok("Profile picture uploaded");
     }
 
+    @PostMapping("/cover-photo")
+    public ResponseEntity<String> uploadCoverPhoto(
+            @RequestParam("file") MultipartFile file
+    ) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        String username = auth.getName();
+
+        userService.uploadCoverPhoto(username, file);
+
+        return ResponseEntity.ok("Cover photo uploaded");
+    }
+
     @GetMapping
     public ResponseEntity<List<User>> getAllUsers() {
         return ResponseEntity.ok(userRepository.findAll());

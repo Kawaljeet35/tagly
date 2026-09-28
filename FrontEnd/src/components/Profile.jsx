@@ -370,6 +370,7 @@ export default function Profile({ handleLogout }) {
       <ProfileTop
         name={user?.name}
         profilePictureUrl={user?.profilePictureUrl}
+        coverPhotoUrl={user?.coverPhotoUrl}
         fetchUser={fetchUser}
         userId={user?.id}
         isOwnProfile={currentUser?.id === user?.id}
