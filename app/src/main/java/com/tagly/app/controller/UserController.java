@@ -1,5 +1,7 @@
 package com.tagly.app.controller;
 
+import com.tagly.app.dto.UpdateProfileRequest;
+import com.tagly.app.dto.UserResponse;
 import com.tagly.app.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -60,24 +62,90 @@ public class UserController {
         return ResponseEntity.ok("Cover photo uploaded");
     }
 
+    @PutMapping("/profile")
+    public ResponseEntity<String> updateProfile(
+            @RequestBody UpdateProfileRequest request
+    ) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        String username = auth.getName();
+
+        userService.updateProfile(username, request);
+
+        return ResponseEntity.ok("Profile updated");
+    }
+
     @GetMapping
-    public ResponseEntity<List<User>> getAllUsers() {
-        return ResponseEntity.ok(userRepository.findAll());
+    public ResponseEntity<List<UserResponse>> getAllUsers() {
+
+        List<User> users = userRepository.findAll();
+
+        List<UserResponse> responses = users.stream()
+                .map(user -> {
+                    UserResponse response = new UserResponse();
+
+                    response.setId(user.getId());
+                    response.setName(user.getName());
+                    response.setUsername(user.getUsername());
+                    response.setProfilePictureUrl(user.getProfilePictureUrl());
+                    response.setCoverPhotoUrl(user.getCoverPhotoUrl());
+
+                    return response;
+                })
+                .toList();
+
+        return ResponseEntity.ok(responses);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable Long id) {
+    public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
 
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        return ResponseEntity.ok(user);
+        Authentication auth =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        String currentUsername = auth.getName();
+
+        UserResponse response = new UserResponse();
+
+        response.setId(user.getId());
+        response.setName(user.getName());
+        response.setUsername(user.getUsername());
+        response.setDateOfBirth(user.getDateOfBirth());
+        response.setCreatedAt(user.getCreatedAt());
+        response.setBio(user.getBio());
+        response.setLocation(user.getLocation());
+        response.setProfilePictureUrl(user.getProfilePictureUrl());
+        response.setCoverPhotoUrl(user.getCoverPhotoUrl());
+
+        if (user.getUsername().equals(currentUsername)) {
+            response.setEmail(user.getEmail());
+        }
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/search")
-    public List<User> searchUsers(
+    public ResponseEntity<List<UserResponse>> searchUsers(
             @RequestParam String keyword
     ) {
-        return userService.searchUsers(keyword);
+        List<User> users = userService.searchUsers(keyword);
+
+        List<UserResponse> responses = users.stream()
+                .map(user -> {
+                    UserResponse response = new UserResponse();
+
+                    response.setId(user.getId());
+                    response.setName(user.getName());
+                    response.setUsername(user.getUsername());
+                    response.setProfilePictureUrl(user.getProfilePictureUrl());
+
+                    return response;
+                })
+                .toList();
+
+        return ResponseEntity.ok(responses);
     }
 }

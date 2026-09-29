@@ -12,11 +12,18 @@ public class MinioProperties {
     @Value("${minio.endpoint}")
     private String endpoint;
 
+    @Value("${minio.public-url}")
+    private String publicUrl;
+
     public String getBucket() {
         return bucket;
     }
 
     public String getEndpoint() {
         return endpoint;
+    }
+
+    public String getPublicUrl() {
+        return publicUrl;
     }
 }

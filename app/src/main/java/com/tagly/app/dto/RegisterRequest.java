@@ -1,7 +1,10 @@
 package com.tagly.app.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+
+import java.time.LocalDate;
 
 public class RegisterRequest {
 
@@ -17,6 +20,9 @@ public class RegisterRequest {
     @NotBlank
     @Email
     private String email;
+
+    @JsonProperty("date_of_birth")
+    private LocalDate dateOfBirth;
 
     public String getUsername() {
         return username;
@@ -48,5 +54,13 @@ public class RegisterRequest {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public LocalDate getDateOfBirth() {
+        return dateOfBirth;
+    }
+
+    public void setDateOfBirth(LocalDate dateOfBirth) {
+        this.dateOfBirth = dateOfBirth;
     }
 }

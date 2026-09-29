@@ -1,6 +1,7 @@
 package com.tagly.app.service;
 
 import com.tagly.app.config.MinioProperties;
+import com.tagly.app.dto.UpdateProfileRequest;
 import com.tagly.app.dto.UserResponse;
 import com.tagly.app.repository.UserRepository;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -37,21 +38,38 @@ public class UserService {
             throw new RuntimeException("User not found");
         }
 
+        User ourUser = user.get();
+
         UserResponse response = new UserResponse();
 
-        response.setId(user.get().getId());
-        response.setName(user.get().getName());
-        response.setUsername(user.get().getUsername());
-
-        response.setProfilePictureUrl(
-                user.get().getProfilePictureUrl()
-        );
-
-        response.setCoverPhotoUrl(
-                user.get().getCoverPhotoUrl()
-        );
+        response.setId(ourUser.getId());
+        response.setName(ourUser.getName());
+        response.setUsername(ourUser.getUsername());
+        response.setEmail(ourUser.getEmail());
+        response.setDateOfBirth(ourUser.getDateOfBirth());
+        response.setCreatedAt(ourUser.getCreatedAt());
+        response.setBio(ourUser.getBio());
+        response.setLocation(ourUser.getLocation());
+        response.setProfilePictureUrl(ourUser.getProfilePictureUrl());
+        response.setCoverPhotoUrl(ourUser.getCoverPhotoUrl());
 
         return response;
+    }
+
+    public void updateProfile(String username, UpdateProfileRequest request) {
+        Optional<User> user = userRepository.findByUsername(username);
+
+        if (user.isEmpty()) {
+            throw new RuntimeException("User not found");
+        }
+
+        User ourUser = user.get();
+
+        ourUser.setName(request.getName());
+        ourUser.setBio(request.getBio());
+        ourUser.setLocation(request.getLocation());
+
+        userRepository.save(ourUser);
     }
 
     public void uploadProfilePicture(String username, MultipartFile file) {
@@ -80,7 +98,8 @@ public class UserService {
             );
 
             String profilePictureUrl =
-                    "https://paqfjtztcsowsxbwwvqh.supabase.co/storage/v1/object/public/"
+                    minioProperties.getPublicUrl()
+                            + "/"
                             + minioProperties.getBucket()
                             + "/"
                             + fileName;
@@ -123,7 +142,8 @@ public class UserService {
             );
 
             String coverPhotoUrl =
-                    "https://paqfjtztcsowsxbwwvqh.supabase.co/storage/v1/object/public/"
+                    minioProperties.getPublicUrl()
+                            + "/"
                             + minioProperties.getBucket()
                             + "/"
                             + fileName;
