@@ -68,7 +68,8 @@ public class PostService {
                 );
 
                 mediaUrl =
-                        "https://paqfjtztcsowsxbwwvqh.supabase.co/storage/v1/object/public/"
+                        minioProperties.getPublicUrl()
+                                + "/"
                                 + minioProperties.getBucket()
                                 + "/"
                                 + fileName;
@@ -303,10 +304,7 @@ public class PostService {
         postRepository.delete(post);
     }
 
-    public List<Comment> getCommentsByPost(
-            Long postId
-    ) {
-
+    public List<Comment> getCommentsByPost(Long postId) {
         Optional<Post> postOpt =
                 postRepository.findById(postId);
 

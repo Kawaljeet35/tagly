@@ -370,8 +370,14 @@ export default function ProfileTop({
             <button onClick={() => setActiveTab("posts")}>Posts</button>
           </li>
 
-          <li className="hover:bg-gray-300 py-2 px-4 rounded-md">
-            <a href="#">About</a>
+          <li
+            className={`py-2 px-4 rounded-md ${
+              activeTab === "about"
+                ? "bg-gray-200 font-semibold"
+                : "hover:bg-gray-300"
+            }`}
+          >
+            <button onClick={() => setActiveTab("about")}>About</button>
           </li>
 
           <li className="hover:bg-gray-300 py-2 px-4 rounded-md">

@@ -18,6 +18,15 @@ export default function Profile({ handleLogout }) {
   const [videoComments, setVideoComments] = useState([]);
   const [showVideoComments, setShowVideoComments] = useState(false);
   const [videoCommentText, setVideoCommentText] = useState("");
+  const [isNameEditOpen, setIsNameEditOpen] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [nameUpdateLoading, setNameUpdateLoading] = useState(false);
+  const [isBioEditOpen, setIsBioEditOpen] = useState(false);
+  const [editBio, setEditBio] = useState("");
+  const [bioUpdateLoading, setBioUpdateLoading] = useState(false);
+  const [isLocationEditOpen, setIsLocationEditOpen] = useState(false);
+  const [editLocation, setEditLocation] = useState("");
+  const [locationUpdateLoading, setLocationUpdateLoading] = useState(false);
 
   const { id } = useParams();
 
@@ -103,6 +112,119 @@ export default function Profile({ handleLogout }) {
       setPosts(data);
     } catch (error) {
       console.error("Error fetching profile posts:", error);
+    }
+  };
+
+  const handleNameUpdate = async () => {
+    if (!editName.trim()) {
+      alert("Name cannot be empty");
+      return;
+    }
+
+    setNameUpdateLoading(true);
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/users/profile`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify({
+            name: editName.trim(),
+            bio: user?.bio || "",
+            location: user?.location || "",
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to update name");
+      }
+
+      await fetchUser();
+      await fetchCurrentUser();
+
+      setIsNameEditOpen(false);
+    } catch (error) {
+      console.error("Error updating name:", error);
+      alert("Failed to update name");
+    } finally {
+      setNameUpdateLoading(false);
+    }
+  };
+
+  const handleBioUpdate = async () => {
+    setBioUpdateLoading(true);
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/users/profile`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify({
+            name: user?.name || "",
+            bio: editBio.trim(),
+            location: user?.location || "",
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to update bio");
+      }
+
+      await fetchUser();
+      await fetchCurrentUser();
+
+      setIsBioEditOpen(false);
+    } catch (error) {
+      console.error("Error updating bio:", error);
+      alert("Failed to update bio");
+    } finally {
+      setBioUpdateLoading(false);
+    }
+  };
+
+  const handleLocationUpdate = async () => {
+    setLocationUpdateLoading(true);
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/users/profile`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify({
+            name: user?.name || "",
+            bio: user?.bio || "",
+            location: editLocation.trim(),
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to update location");
+      }
+
+      await fetchUser();
+      await fetchCurrentUser();
+
+      setIsLocationEditOpen(false);
+    } catch (error) {
+      console.error("Error updating location:", error);
+      alert("Failed to update location");
+    } finally {
+      setLocationUpdateLoading(false);
     }
   };
 
@@ -380,7 +502,7 @@ export default function Profile({ handleLogout }) {
         setActiveTab={setActiveTab}
       />
 
-      <div className="max-w-4xl mx-auto mt-8 pb-[10px]">
+      <div className="max-w-4xl mx-auto mt-3 pb-[10px]">
         {activeTab === "posts" && (
           <>
             {posts.map((post) => (
@@ -482,6 +604,184 @@ export default function Profile({ handleLogout }) {
                   </div>
                 </div>
               ))}
+          </div>
+        )}
+
+        {activeTab === "about" && (
+          <div className="bg-white rounded-xl shadow p-6">
+            <h2 className="text-2xl font-bold mb-6">About</h2>
+
+            <div className="space-y-5">
+              <div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-500">Name</p>
+                    <p className="text-lg font-medium">
+                      {user?.name || "Not provided"}
+                    </p>
+                  </div>
+
+                  {currentUser?.id === user?.id && (
+                    <button
+                      onClick={() => {
+                        setEditName(user?.name || "");
+                        setIsNameEditOpen(true);
+                      }}
+                      className="text-teal-600 hover:bg-teal-50 px-3 py-2 rounded-md flex items-center gap-2"
+                    >
+                      <svg
+                        className="w-5 h-5"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M4 20H8L19.5 8.5C20.3284 7.67157 20.3284 6.32843 19.5 5.5C18.6716 4.67157 17.3284 4.67157 16.5 5.5L5 17V20Z"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <path
+                          d="M14 7L17 10"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+
+                      <span className="text-base font-medium">Edit</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <p className="text-sm text-gray-500">Username</p>
+                <p className="text-lg font-medium">@{user?.username}</p>
+              </div>
+
+              {user?.email && (
+                <div>
+                  <p className="text-sm text-gray-500">Email</p>
+                  <p className="text-lg font-medium">{user.email}</p>
+                </div>
+              )}
+
+              <div>
+                <p className="text-sm text-gray-500">Birthday</p>
+                <p className="text-lg font-medium">
+                  {user?.dateOfBirth
+                    ? new Date(user.dateOfBirth).toLocaleDateString([], {
+                        day: "numeric",
+                        month: "long",
+                      })
+                    : "Not provided"}
+                </p>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-500">Bio</p>
+                    <p className="text-lg font-medium">
+                      {user?.bio || "No bio added"}
+                    </p>
+                  </div>
+
+                  {currentUser?.id === user?.id && (
+                    <button
+                      onClick={() => {
+                        setEditBio(user?.bio || "");
+                        setIsBioEditOpen(true);
+                      }}
+                      className="text-teal-600 hover:bg-teal-50 px-3 py-2 rounded-md flex items-center gap-2"
+                    >
+                      <svg
+                        className="w-5 h-5"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M4 20H8L19.5 8.5C20.3284 7.67157 20.3284 6.32843 19.5 5.5C18.6716 4.67157 17.3284 4.67157 16.5 5.5L5 17V20Z"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <path
+                          d="M14 7L17 10"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                      <span className="text-base font-medium">Edit</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-500">Location</p>
+                    <p className="text-lg font-medium">
+                      {user?.location || "Not provided"}
+                    </p>
+                  </div>
+
+                  {currentUser?.id === user?.id && (
+                    <button
+                      onClick={() => {
+                        setEditLocation(user?.location || "");
+                        setIsLocationEditOpen(true);
+                      }}
+                      className="text-teal-600 hover:bg-teal-50 px-3 py-2 rounded-md flex items-center gap-2"
+                    >
+                      <svg
+                        className="w-5 h-5"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M4 20H8L19.5 8.5C20.3284 7.67157 20.3284 6.32843 19.5 5.5C18.6716 4.67157 17.3284 4.67157 16.5 5.5L5 17V20Z"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <path
+                          d="M14 7L17 10"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                      <span className="text-base font-medium">Edit</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <p className="text-sm text-gray-500">Joined Tagly</p>
+                <p className="text-lg font-medium">
+                  {user?.createdAt
+                    ? new Date(user.createdAt).toLocaleDateString([], {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })
+                    : "Not provided"}
+                </p>
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -751,6 +1051,119 @@ export default function Profile({ handleLogout }) {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+      {isNameEditOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
+            <h2 className="text-xl font-bold mb-4">Edit Name</h2>
+
+            <input
+              type="text"
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
+              placeholder="Enter your name"
+            />
+
+            <div className="flex justify-end gap-2 mt-5">
+              <button
+                onClick={() => !nameUpdateLoading && setIsNameEditOpen(false)}
+                disabled={nameUpdateLoading}
+                className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={handleNameUpdate}
+                disabled={nameUpdateLoading}
+                className={`px-4 py-2 rounded-md text-white ${
+                  nameUpdateLoading
+                    ? "bg-gray-400"
+                    : "bg-teal-600 hover:bg-teal-700"
+                }`}
+              >
+                {nameUpdateLoading ? "Saving..." : "Save"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {isBioEditOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
+            <h2 className="text-xl font-bold mb-4">Edit Bio</h2>
+
+            <textarea
+              value={editBio}
+              onChange={(e) => setEditBio(e.target.value)}
+              rows={4}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-teal-500"
+              placeholder="Tell people something about yourself"
+            />
+
+            <div className="flex justify-end gap-2 mt-5">
+              <button
+                onClick={() => !bioUpdateLoading && setIsBioEditOpen(false)}
+                disabled={bioUpdateLoading}
+                className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={handleBioUpdate}
+                disabled={bioUpdateLoading}
+                className={`px-4 py-2 rounded-md text-white ${
+                  bioUpdateLoading
+                    ? "bg-gray-400"
+                    : "bg-teal-600 hover:bg-teal-700"
+                }`}
+              >
+                {bioUpdateLoading ? "Saving..." : "Save"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {isLocationEditOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
+            <h2 className="text-xl font-bold mb-4">Edit Location</h2>
+
+            <input
+              type="text"
+              value={editLocation}
+              onChange={(e) => setEditLocation(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
+              placeholder="Enter your location"
+            />
+
+            <div className="flex justify-end gap-2 mt-5">
+              <button
+                onClick={() =>
+                  !locationUpdateLoading && setIsLocationEditOpen(false)
+                }
+                disabled={locationUpdateLoading}
+                className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={handleLocationUpdate}
+                disabled={locationUpdateLoading}
+                className={`px-4 py-2 rounded-md text-white ${
+                  locationUpdateLoading
+                    ? "bg-gray-400"
+                    : "bg-teal-600 hover:bg-teal-700"
+                }`}
+              >
+                {locationUpdateLoading ? "Saving..." : "Save"}
+              </button>
+            </div>
           </div>
         </div>
       )}
