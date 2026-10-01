@@ -1,91 +1,82 @@
-import { useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import Navbar from "./Navbar";
+import ChatWindow from "./ChatWindow";
+import ProfilePic from "../assets/pic.png";
 
-export default function Messages() {
-  const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState("");
+export default function Messages({ handleLogout }) {
   const { id } = useParams();
-
-  const fetchMessages = async () => {
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/messages/${id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        },
-      );
-
-      const data = await response.json();
-
-      setMessages(data);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const sendMessage = async () => {
-    if (!newMessage.trim()) return;
-
-    try {
-      const formData = new FormData();
-
-      formData.append("content", newMessage);
-
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/messages/${id}`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-          body: formData,
-        },
-      );
-
-      if (response.ok) {
-        setNewMessage("");
-        fetchMessages();
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  const navigate = useNavigate();
+  const [minimized, setMinimized] = useState(false);
+  const [userName, setUserName] = useState("Chat");
+  const [userProfilePicture, setUserProfilePicture] = useState(null);
 
   useEffect(() => {
-    fetchMessages();
-  }, []);
+    const fetchUser = async () => {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/users/${id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          },
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch user");
+        }
+
+        const data = await response.json();
+        setUserName(data.name || data.username || "Chat");
+        setUserProfilePicture(data.profilePictureUrl || null);
+      } catch (error) {
+        console.error("Error fetching message user:", error);
+      }
+    };
+
+    fetchUser();
+  }, [id]);
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Messages</h1>
+    <>
+      <Navbar handleLogout={handleLogout} />
 
-      <div className="border rounded-lg p-4 h-[500px] overflow-y-auto bg-gray-50 text-black">
-        {messages.map((message) => (
-          <div key={message.id} className="mb-3">
-            <p className="font-semibold">{message.sender.name}</p>
+      <div className="fixed bottom-4 right-4 z-50 w-80 bg-white border shadow-xl rounded-xl">
+        <div className="flex items-center justify-between p-3 border-b bg-teal-600 rounded-t-xl">
+          <div
+            onClick={() => navigate(`/users/${id}`)}
+            className="flex items-center gap-2 cursor-pointer"
+          >
+            <img
+              src={userProfilePicture || ProfilePic}
+              alt=""
+              className="w-8 h-8 rounded-full object-cover"
+            />
 
-            <p>{message.content}</p>
+            <h2 className="font-semibold text-white hover:underline">
+              {userName}
+            </h2>
           </div>
-        ))}
-      </div>
-      <div className="mt-4 flex gap-2 bg-gray-50 p-4">
-        <input
-          type="text"
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          placeholder="Type a message..."
-          className="flex-1 border rounded-lg px-4 py-2 outline-none"
-        />
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setMinimized((prev) => !prev)}
+              className="text-zinc-100 text-l leading-none hover:text-cyan-200"
+            >
+              —
+            </button>
 
-        <button
-          onClick={sendMessage}
-          className="bg-teal-600 text-white px-4 py-2 rounded-lg"
-        >
-          Send
-        </button>
+            <button
+              onClick={() => navigate(-1)}
+              className="text-zinc-100 hover:text-red-300"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+
+        {!minimized && <ChatWindow userId={Number(id)} userName={userName} />}
       </div>
-    </div>
+    </>
   );
 }

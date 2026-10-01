@@ -96,7 +96,8 @@ public class MessageService {
                 );
 
                 imageUrl =
-                        "https://paqfjtztcsowsxbwwvqh.supabase.co/storage/v1/object/public/"
+                        minioProperties.getPublicUrl()
+                                + "/"
                                 + minioProperties.getBucket()
                                 + "/"
                                 + fileName;

@@ -1,4 +1,6 @@
 import Navbar from "./Navbar";
+import ChatWindow from "./ChatWindow";
+import ProfilePic from "../assets/pic.png";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -10,6 +12,8 @@ export default function Friends({ handleLogout, profilePictureUrl }) {
   const [myFriends, setMyFriends] = useState([]);
   const [sentRequests, setSentRequests] = useState([]);
   const [friendStatuses, setFriendStatuses] = useState({});
+  const [activeChat, setActiveChat] = useState(null);
+  const [minimizedChat, setMinimizedChat] = useState(false);
   const navigate = useNavigate();
   const { id } = useParams();
 
@@ -434,7 +438,8 @@ export default function Friends({ handleLogout, profilePictureUrl }) {
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  navigate(`/messages/${friendUser.id}`);
+                                  setActiveChat(friendUser);
+                                  setMinimizedChat(false);
                                 }}
                                 className="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-lg text-sm"
                               >
@@ -464,7 +469,8 @@ export default function Friends({ handleLogout, profilePictureUrl }) {
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  navigate(`/messages/${friendUser.id}`);
+                                  setActiveChat(friendUser);
+                                  setMinimizedChat(false);
                                 }}
                                 className="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-lg text-sm"
                               >
@@ -499,6 +505,49 @@ export default function Friends({ handleLogout, profilePictureUrl }) {
           </section>
         </div>
       </main>
+      {activeChat && (
+        <div className="fixed bottom-4 right-4 z-50 w-80 bg-white border shadow-xl rounded-xl">
+          <div className="flex items-center justify-between p-3 border-b bg-teal-600 rounded-t-xl">
+            <div
+              onClick={() => navigate(`/users/${activeChat.id}`)}
+              className="flex items-center gap-2 cursor-pointer"
+            >
+              <img
+                src={activeChat.profilePictureUrl || ProfilePic}
+                alt=""
+                className="w-8 h-8 rounded-full object-cover"
+              />
+
+              <h2 className="font-semibold text-white hover:underline">
+                {activeChat.name || activeChat.username}
+              </h2>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setMinimizedChat((prev) => !prev)}
+                className="text-zinc-100 text-l leading-none hover:text-cyan-200"
+              >
+                —
+              </button>
+
+              <button
+                onClick={() => setActiveChat(null)}
+                className="text-zinc-100 hover:text-red-300"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+
+          {!minimizedChat && (
+            <ChatWindow
+              userId={activeChat.id}
+              userName={activeChat.name || activeChat.username}
+            />
+          )}
+        </div>
+      )}
     </>
   );
 }

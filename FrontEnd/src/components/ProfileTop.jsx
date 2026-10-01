@@ -1,6 +1,7 @@
 import pic from "../assets/pic.png";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import ChatWindow from "./ChatWindow";
 
 export default function ProfileTop({
   name,
@@ -22,6 +23,8 @@ export default function ProfileTop({
   const [selectedCoverFile, setSelectedCoverFile] = useState(null);
   const [coverMessage, setCoverMessage] = useState("");
   const [coverLoading, setCoverLoading] = useState(false);
+  const [showChat, setShowChat] = useState(false);
+  const [minimizedChat, setMinimizedChat] = useState(false);
   const navigate = useNavigate();
 
   const handleProfilePictureUpload = async () => {
@@ -242,7 +245,7 @@ export default function ProfileTop({
           </button>
         )}
 
-        <div className="flex items-center justify-between gap-[108px] absolute -bottom-[72px] right-0">
+        <div className="flex items-center justify-between absolute -bottom-[72px] left-[225px] right-0">
           <span className="font-bold text-2xl">{name}</span>
           <div className="flex items-center justify-between gap-2">
             {isOwnProfile && (
@@ -306,7 +309,10 @@ export default function ProfileTop({
               </button>
             ) : (
               <button
-                onClick={() => navigate(`/messages/${userId}`)}
+                onClick={() => {
+                  setShowChat(true);
+                  setMinimizedChat(false);
+                }}
                 className="rounded-md bg-cyan-600 py-2 px-3 flex items-center justify-between gap-1"
               >
                 <span className="text-white">Message</span>
@@ -446,6 +452,39 @@ export default function ProfileTop({
           </svg>
         </button>
       </div>
+      {showChat && !isOwnProfile && (
+        <div className="fixed bottom-4 right-4 z-50 w-80 bg-white border shadow-xl rounded-xl">
+          <div className="flex items-center justify-between p-3 border-b bg-teal-600 rounded-t-xl">
+            <div className="flex items-center gap-2">
+              <img
+                src={profilePictureUrl || pic}
+                alt=""
+                className="w-8 h-8 rounded-full object-cover"
+              />
+
+              <h2 className="font-semibold text-white">{name}</h2>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setMinimizedChat((prev) => !prev)}
+                className="text-zinc-100 text-l leading-none hover:text-cyan-200"
+              >
+                —
+              </button>
+
+              <button
+                onClick={() => setShowChat(false)}
+                className="text-zinc-100 hover:text-red-300"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+
+          {!minimizedChat && <ChatWindow userId={userId} userName={name} />}
+        </div>
+      )}
       {isPopupVisible && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-4 rounded-lg">

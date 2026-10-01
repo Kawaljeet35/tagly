@@ -1,8 +1,6 @@
 package com.tagly.app.service;
 
-import com.tagly.app.dto.AuthResponse;
-import com.tagly.app.dto.LoginRequest;
-import com.tagly.app.dto.RegisterRequest;
+import com.tagly.app.dto.*;
 import com.tagly.app.repository.UserRepository;
 import com.tagly.app.security.JwtUtil;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -60,5 +58,46 @@ public class AuthService {
         String token = jwtUtil.generateToken(user.getUsername());
 
         return new AuthResponse(token);
+    }
+
+    public void verifyAccount(VerifyAccountRequest request) {
+
+        Optional<User> theUser = userRepository.findByUsername(request.getUsername());
+
+        if (theUser.isEmpty()) {
+            throw new IllegalArgumentException("Account details do not match");
+        }
+
+        User user = theUser.get();
+
+        boolean emailMatches = user.getEmail().equalsIgnoreCase(request.getEmail());
+        boolean dateOfBirthMatches = user.getDateOfBirth().equals(request.getDateOfBirth());
+
+        if (!emailMatches || !dateOfBirthMatches) {
+            throw new IllegalArgumentException("Account details do not match");
+        }
+    }
+
+    public void resetPassword(ResetPasswordRequest request) {
+
+        Optional<User> theUser = userRepository.findByUsername(request.getUsername());
+
+        if (theUser.isEmpty()) {
+            throw new IllegalArgumentException("Account details do not match");
+        }
+
+        User user = theUser.get();
+
+        boolean emailMatches = user.getEmail().equalsIgnoreCase(request.getEmail());
+        boolean dateOfBirthMatches = user.getDateOfBirth().equals(request.getDateOfBirth());
+
+        if (!emailMatches || !dateOfBirthMatches) {
+            throw new IllegalArgumentException("Account details do not match");
+        }
+
+        String hashedPassword = passwordEncoder.encode(request.getNewPassword());
+        user.setHashedPassword(hashedPassword);
+
+        userRepository.save(user);
     }
 }

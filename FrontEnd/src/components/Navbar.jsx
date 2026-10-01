@@ -179,6 +179,56 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
     }
   };
 
+  const openChat = async (user) => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/users/${user.userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        },
+      );
+
+      const profileData = response.ok ? await response.json() : null;
+
+      setActiveChats((prev) => {
+        if (prev.some((chat) => chat.userId === user.userId)) {
+          return prev;
+        }
+
+        return [
+          ...prev,
+          {
+            ...user,
+            profilePictureUrl: profileData?.profilePictureUrl || null,
+          },
+        ];
+      });
+    } catch (error) {
+      console.error("Error fetching chat user profile:", error);
+
+      setActiveChats((prev) => {
+        if (prev.some((chat) => chat.userId === user.userId)) {
+          return prev;
+        }
+
+        return [...prev, user];
+      });
+    }
+
+    setUnreadChats((prev) => prev.filter((id) => id !== user.userId));
+
+    fetch(`${import.meta.env.VITE_API_URL}/api/messages/read/${user.userId}`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    });
+
+    setShowMessages(false);
+  };
+
   const fetchCurrentUser = async () => {
     try {
       const response = await fetch(
@@ -653,31 +703,7 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
               inboxUsers.map((user) => (
                 <div
                   key={user.userId}
-                  onClick={() => {
-                    setActiveChats((prev) => {
-                      if (prev.some((chat) => chat.userId === user.userId)) {
-                        return prev;
-                      }
-
-                      return [...prev, user];
-                    });
-
-                    setUnreadChats((prev) =>
-                      prev.filter((id) => id !== user.userId),
-                    );
-
-                    fetch(
-                      `${import.meta.env.VITE_API_URL}/api/messages/read/${user.userId}`,
-                      {
-                        method: "PUT",
-                        headers: {
-                          Authorization: `Bearer ${localStorage.getItem("token")}`,
-                        },
-                      },
-                    );
-
-                    setShowMessages(false);
-                  }}
+                  onClick={() => openChat(user)}
                   className={`p-3 border-b cursor-pointer ${
                     unreadChats.includes(user.userId)
                       ? "bg-cyan-100 hover:bg-cyan-200"
@@ -745,7 +771,15 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
           }}
         >
           <div className="flex items-center justify-between p-3 border-b bg-teal-600">
-            <h2 className="font-semibold text-white">{chat.name}</h2>
+            <div className="flex items-center gap-2">
+              <img
+                src={chat.profilePictureUrl || ProfilePic}
+                alt=""
+                className="w-8 h-8 rounded-full object-cover"
+              />
+
+              <h2 className="font-semibold text-white">{chat.name}</h2>
+            </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => {

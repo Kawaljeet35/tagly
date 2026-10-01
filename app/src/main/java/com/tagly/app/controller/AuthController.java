@@ -1,9 +1,6 @@
 package com.tagly.app.controller;
 
-import com.tagly.app.dto.ApiResponse;
-import com.tagly.app.dto.AuthResponse;
-import com.tagly.app.dto.LoginRequest;
-import com.tagly.app.dto.RegisterRequest;
+import com.tagly.app.dto.*;
 import com.tagly.app.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -38,6 +35,36 @@ public class AuthController {
     public ResponseEntity<AuthResponse> login(@RequestBody @Valid LoginRequest request) {
 
         AuthResponse response = authService.login(request);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/verify-account")
+    public ResponseEntity<ApiResponse> verifyAccount(
+            @RequestBody @Valid VerifyAccountRequest request) {
+
+        authService.verifyAccount(request);
+
+        ApiResponse response = new ApiResponse(
+                "Account verified successfully",
+                200,
+                LocalDateTime.now().toString()
+        );
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiResponse> resetPassword(
+            @RequestBody @Valid ResetPasswordRequest request) {
+
+        authService.resetPassword(request);
+
+        ApiResponse response = new ApiResponse(
+                "Password reset successfully",
+                200,
+                LocalDateTime.now().toString()
+        );
 
         return ResponseEntity.ok(response);
     }

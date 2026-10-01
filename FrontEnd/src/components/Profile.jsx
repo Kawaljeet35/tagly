@@ -1,6 +1,7 @@
 import Navbar from "./Navbar";
 import ProfileTop from "./ProfileTop";
 import Posts from "./Posts";
+import ProfilePic from "../assets/pic.png";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 
@@ -478,6 +479,54 @@ export default function Profile({ handleLogout }) {
     return `${timeString} on ${dayString}`;
   };
 
+  const formatCommentTimestamp = (timestamp) => {
+    if (!timestamp) return "";
+
+    const now = new Date();
+    const commentDate = new Date(timestamp);
+    const diffInSeconds = Math.floor(
+      (now.getTime() - commentDate.getTime()) / 1000,
+    );
+
+    if (diffInSeconds < 60) {
+      return "now";
+    }
+
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+
+    if (diffInMinutes < 60) {
+      return `${diffInMinutes}m`;
+    }
+
+    const diffInHours = Math.floor(diffInMinutes / 60);
+
+    if (diffInHours < 24) {
+      return `${diffInHours}h`;
+    }
+
+    const diffInDays = Math.floor(diffInHours / 24);
+
+    if (diffInDays < 7) {
+      return `${diffInDays}d`;
+    }
+
+    const diffInWeeks = Math.floor(diffInDays / 7);
+
+    if (diffInWeeks < 4) {
+      return `${diffInWeeks}w`;
+    }
+
+    const diffInMonths = Math.floor(diffInDays / 30);
+
+    if (diffInMonths < 12) {
+      return `${diffInMonths}mo`;
+    }
+
+    const diffInYears = Math.floor(diffInDays / 365);
+
+    return `${diffInYears}y`;
+  };
+
   if (!user) {
     return <p>Loading...</p>;
   }
@@ -878,21 +927,34 @@ export default function Profile({ handleLogout }) {
                     </p>
                   ) : (
                     photoComments.map((comment) => (
-                      <div key={comment.id} className="flex gap-4">
+                      <div key={comment.id} className="flex gap-3">
                         <img
-                          src={comment.user?.profilePictureUrl}
+                          src={comment.user?.profilePictureUrl || ProfilePic}
                           alt=""
-                          className="w-9 h-9 rounded-full object-cover"
+                          className="w-9 h-9 rounded-full object-cover flex-shrink-0"
                         />
 
-                        <div>
-                          <p className="font-semibold text-sm text-gray-900">
-                            {comment.user?.name || comment.user?.username}
-                          </p>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-baseline gap-2">
+                            <p className="font-semibold text-sm text-gray-900">
+                              {comment.user?.name || comment.user?.username}
+                            </p>
 
-                          <p className="text-sm text-gray-700">
+                            <span className="text-xs text-gray-500">
+                              {formatCommentTimestamp(comment.createdAt)}
+                            </span>
+                          </div>
+
+                          <p className="text-sm text-gray-700 break-words mt-0.5">
                             {comment.content}
                           </p>
+
+                          <button
+                            type="button"
+                            className="text-xs font-semibold text-gray-500 hover:text-gray-800 mt-1"
+                          >
+                            Reply
+                          </button>
                         </div>
                       </div>
                     ))
@@ -1014,19 +1076,32 @@ export default function Profile({ handleLogout }) {
                     videoComments.map((comment) => (
                       <div key={comment.id} className="flex gap-3">
                         <img
-                          src={comment.user?.profilePictureUrl}
+                          src={comment.user?.profilePictureUrl || ProfilePic}
                           alt=""
-                          className="w-9 h-9 rounded-full object-cover"
+                          className="w-9 h-9 rounded-full object-cover flex-shrink-0"
                         />
 
-                        <div>
-                          <p className="font-semibold text-sm text-gray-900">
-                            {comment.user?.name || comment.user?.username}
-                          </p>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-baseline gap-2">
+                            <p className="font-semibold text-sm text-gray-900">
+                              {comment.user?.name || comment.user?.username}
+                            </p>
 
-                          <p className="text-sm text-gray-700">
+                            <span className="text-xs text-gray-500">
+                              {formatCommentTimestamp(comment.createdAt)}
+                            </span>
+                          </div>
+
+                          <p className="text-sm text-gray-700 break-words mt-0.5">
                             {comment.content}
                           </p>
+
+                          <button
+                            type="button"
+                            className="text-xs font-semibold text-gray-500 hover:text-gray-800 mt-1"
+                          >
+                            Reply
+                          </button>
                         </div>
                       </div>
                     ))
