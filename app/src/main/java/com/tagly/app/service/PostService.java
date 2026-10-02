@@ -2,11 +2,7 @@ package com.tagly.app.service;
 
 import com.tagly.app.config.MinioProperties;
 import com.tagly.app.dto.PostResponse;
-import com.tagly.app.entity.Like;
-import com.tagly.app.entity.Post;
-import com.tagly.app.entity.User;
-import com.tagly.app.entity.FriendRequest;
-import com.tagly.app.entity.Comment;
+import com.tagly.app.entity.*;
 import com.tagly.app.repository.*;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
@@ -19,21 +15,24 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class PostService {
     private final UserRepository userRepository;
     private final PostRepository postRepository;
     private final LikeRepository likeRepository;
+    private final CommentLikeRepository commentLikeRepository;
     private final S3Client s3Client;
     private final FriendRequestRepository friendRequestRepository;
     private final CommentRepository commentRepository;
     private final MinioProperties minioProperties;
 
-    public PostService(UserRepository userRepository, PostRepository postRepository, LikeRepository likeRepository, S3Client s3Client, FriendRequestRepository friendRequestRepository, CommentRepository commentRepository, MinioProperties minioProperties){
+    public PostService(UserRepository userRepository, PostRepository postRepository, LikeRepository likeRepository, CommentLikeRepository commentLikeRepository, S3Client s3Client, FriendRequestRepository friendRequestRepository, CommentRepository commentRepository, MinioProperties minioProperties){
         this.userRepository = userRepository;
         this.postRepository = postRepository;
         this.likeRepository = likeRepository;
+        this.commentLikeRepository = commentLikeRepository;
         this.s3Client = s3Client;
         this.friendRequestRepository = friendRequestRepository;
         this.commentRepository = commentRepository;
@@ -226,6 +225,54 @@ public class PostService {
         }
     }
 
+    public List<PostResponse> getAllVideoPosts(String username) {
+
+        User currentUser = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        List<Post> posts =
+                postRepository.findByMediaTypeOrderByCreatedAtDesc("video");
+
+        List<PostResponse> responses = new ArrayList<>();
+
+        for (Post post : posts) {
+
+            PostResponse response = new PostResponse();
+
+            response.setId(post.getId());
+            response.setContent(post.getContent());
+
+            response.setUsername(post.getUser().getUsername());
+
+            response.setName(
+                    post.getUser().getName() != null
+                            ? post.getUser().getName()
+                            : post.getUser().getUsername()
+            );
+
+            response.setCreatedAt(post.getCreatedAt());
+
+            response.setLikesCount(post.getLikesCount());
+            response.setCommentsCount(post.getCommentsCount());
+
+            response.setMediaUrl(post.getMediaUrl());
+            response.setMediaType(post.getMediaType());
+
+            response.setLikedByCurrentUser(
+                    likeRepository
+                            .findByUserAndPost(currentUser, post)
+                            .isPresent()
+            );
+
+            response.setProfilePictureUrl(
+                    post.getUser().getProfilePictureUrl()
+            );
+
+            responses.add(response);
+        }
+
+        return responses;
+    }
 
     public void toggleLike(Long postId, String username) {
         Optional<User> userOpt = userRepository.findByUsername(username);
@@ -257,6 +304,56 @@ public class PostService {
         postRepository.save(post);
     }
 
+    public void toggleCommentLike(
+            Long commentId,
+            String username
+    ) {
+
+        Optional<User> userOpt =
+                userRepository.findByUsername(username);
+
+        Optional<Comment> commentOpt =
+                commentRepository.findById(commentId);
+
+        if (userOpt.isEmpty() || commentOpt.isEmpty()) {
+            throw new RuntimeException("User or Comment not found");
+        }
+
+        User user = userOpt.get();
+        Comment comment = commentOpt.get();
+
+        Optional<CommentLike> existingLike =
+                commentLikeRepository.findByUserAndComment(
+                        user,
+                        comment
+                );
+
+        if (existingLike.isPresent()) {
+
+            commentLikeRepository.delete(existingLike.get());
+
+            comment.setLikesCount(
+                    Math.max(0, comment.getLikesCount() - 1)
+            );
+
+        } else {
+
+            CommentLike commentLike = new CommentLike();
+
+            commentLike.setUser(user);
+            commentLike.setComment(comment);
+            commentLike.setCreatedAt(LocalDateTime.now());
+
+            commentLikeRepository.save(commentLike);
+
+            comment.setLikesCount(
+                    comment.getLikesCount() + 1
+            );
+        }
+
+        commentRepository.save(comment);
+    }
+
     public void addComment(Long postId, String username, String content) {
         Optional<User> userOpt = userRepository.findByUsername(username);
         Optional<Post> postOpt = postRepository.findById(postId);
@@ -276,6 +373,104 @@ public class PostService {
         comment.setCreatedAt(LocalDateTime.now());
         commentRepository.save(comment);
         post.setCommentsCount(post.getCommentsCount() + 1);
+        postRepository.save(post);
+    }
+
+    public void addReply(
+            Long commentId,
+            String username,
+            String content
+    ) {
+
+        Optional<User> userOpt =
+                userRepository.findByUsername(username);
+
+        Optional<Comment> commentOpt =
+                commentRepository.findById(commentId);
+
+        if (userOpt.isEmpty() || commentOpt.isEmpty()) {
+            throw new RuntimeException("User or Comment not found");
+        }
+
+        User user = userOpt.get();
+        Comment parentComment = commentOpt.get();
+
+        // Tagly supports replies only one level deep.
+        if (parentComment.getParentComment() != null) {
+            throw new IllegalArgumentException(
+                    "Replies can only be one level deep"
+            );
+        }
+
+        Comment reply = new Comment();
+
+        reply.setUser(user);
+        reply.setPost(parentComment.getPost());
+        reply.setContent(content);
+        reply.setCreatedAt(LocalDateTime.now());
+        reply.setParentComment(parentComment);
+
+        commentRepository.save(reply);
+
+        Post post = parentComment.getPost();
+        post.setCommentsCount(post.getCommentsCount() + 1);
+
+        postRepository.save(post);
+    }
+
+    @Transactional
+    public void deleteComment(
+            Long commentId,
+            String username
+    ) {
+
+        Optional<User> userOpt =
+                userRepository.findByUsername(username);
+
+        Optional<Comment> commentOpt =
+                commentRepository.findById(commentId);
+
+        if (userOpt.isEmpty() || commentOpt.isEmpty()) {
+            throw new RuntimeException("User or Comment not found");
+        }
+
+        User currentUser = userOpt.get();
+        Comment comment = commentOpt.get();
+
+        Post post = comment.getPost();
+
+        boolean isCommentOwner =
+                comment.getUser().getId().equals(currentUser.getId());
+
+        boolean isPostOwner =
+                post.getUser().getId().equals(currentUser.getId());
+
+        if (!isCommentOwner && !isPostOwner) {
+            throw new IllegalArgumentException("Unauthorized");
+        }
+
+        int commentsToRemove = 1;
+
+        // If this is a top-level comment, delete its replies first.
+        if (comment.getParentComment() == null) {
+
+            List<Comment> replies =
+                    commentRepository.findByParentComment(comment);
+
+            commentsToRemove += replies.size();
+
+            commentRepository.deleteAll(replies);
+        }
+
+        commentRepository.delete(comment);
+
+        post.setCommentsCount(
+                Math.max(
+                        0,
+                        post.getCommentsCount() - commentsToRemove
+                )
+        );
+
         postRepository.save(post);
     }
 
@@ -304,17 +499,25 @@ public class PostService {
         postRepository.delete(post);
     }
 
-    public List<Comment> getCommentsByPost(Long postId) {
-        Optional<Post> postOpt =
-                postRepository.findById(postId);
+    public List<Comment> getCommentsByPost(Long postId, String username) {
 
-        if (postOpt.isEmpty()) {
-            throw new RuntimeException("Post not found");
+        User currentUser = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Post not found"));
+
+        List<Comment> comments = commentRepository.findByPostOrderByCreatedAtAsc(post);
+
+        for (Comment comment : comments) {
+            boolean liked = commentLikeRepository
+                    .findByUserAndComment(currentUser, comment)
+                    .isPresent();
+
+            comment.setLikedByCurrentUser(liked);
         }
 
-        return commentRepository.findByPostOrderByCreatedAtAsc(
-                postOpt.get()
-        );
+        return comments;
     }
 
     public void editPost(

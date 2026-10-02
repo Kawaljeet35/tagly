@@ -30,6 +30,21 @@ public class PostController {
         List<PostResponse> posts = postService.getAllPosts(userName);
         return posts;
     }
+
+    @GetMapping("/discover")
+    public ResponseEntity<List<PostResponse>> getDiscoverVideos() {
+
+        Authentication auth =
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication();
+
+        String username = auth.getName();
+
+        return ResponseEntity.ok(
+                postService.getAllVideoPosts(username)
+        );
+    }
     
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<PostResponse>> getPostsByUserId(
@@ -88,6 +103,26 @@ public class PostController {
         return ResponseEntity.ok("Toggled like");
     }
 
+    @PostMapping("/comments/{commentId}/like")
+    public ResponseEntity<String> toggleCommentLike(
+            @PathVariable Long commentId
+    ) {
+
+        Authentication auth =
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication();
+
+        String username = auth.getName();
+
+        postService.toggleCommentLike(
+                commentId,
+                username
+        );
+
+        return ResponseEntity.ok("Toggled comment like");
+    }
+
     @PostMapping("/{postId}/comment")
     public ResponseEntity<?> addComment(
             @PathVariable Long postId,
@@ -106,6 +141,44 @@ public class PostController {
         );
 
         return ResponseEntity.ok("Comment added");
+    }
+
+    @PostMapping("/comments/{commentId}/reply")
+    public ResponseEntity<?> addReply(
+            @PathVariable Long commentId,
+            @RequestBody String content
+    ) {
+
+        String username = SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getName();
+
+        postService.addReply(
+                commentId,
+                username,
+                content
+        );
+
+        return ResponseEntity.ok("Reply added");
+    }
+
+    @DeleteMapping("/comments/{commentId}")
+    public ResponseEntity<?> deleteComment(
+            @PathVariable Long commentId
+    ) {
+
+        String username = SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getName();
+
+        postService.deleteComment(
+                commentId,
+                username
+        );
+
+        return ResponseEntity.ok("Comment deleted");
     }
 
     @GetMapping("/notifications/likes")
@@ -141,12 +214,13 @@ public class PostController {
     }
 
     @GetMapping("/{postId}/comments")
-    public ResponseEntity<List<Comment>> getComments(
-            @PathVariable Long postId
-    ) {
+    public ResponseEntity<List<Comment>> getCommentsByPost(@PathVariable Long postId) {
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
 
         return ResponseEntity.ok(
-                postService.getCommentsByPost(postId)
+                postService.getCommentsByPost(postId, username)
         );
     }
 

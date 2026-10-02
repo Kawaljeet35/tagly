@@ -3,6 +3,7 @@ package com.tagly.app.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 public class Comment {
@@ -23,6 +24,24 @@ public class Comment {
     private String content;
 
     private LocalDateTime createdAt;
+
+    private int likesCount = 0;
+
+    @Transient
+    private boolean likedByCurrentUser;
+
+    @ManyToOne
+    @JoinColumn(name = "parent_comment_id")
+    @JsonIgnore
+    private Comment parentComment;
+
+    @OneToMany(
+            mappedBy = "comment",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    @JsonIgnore
+    private List<CommentLike> likes;
 
     public Long getId() {
         return id;
@@ -62,5 +81,43 @@ public class Comment {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public Comment getParentComment() {
+        return parentComment;
+    }
+
+    public void setParentComment(Comment parentComment) {
+        this.parentComment = parentComment;
+    }
+
+    public Long getParentCommentId() {
+        return parentComment != null
+                ? parentComment.getId()
+                : null;
+    }
+
+    public int getLikesCount() {
+        return likesCount;
+    }
+
+    public void setLikesCount(int likesCount) {
+        this.likesCount = likesCount;
+    }
+
+    public List<CommentLike> getLikes() {
+        return likes;
+    }
+
+    public void setLikes(List<CommentLike> likes) {
+        this.likes = likes;
+    }
+
+    public boolean isLikedByCurrentUser() {
+        return likedByCurrentUser;
+    }
+
+    public void setLikedByCurrentUser(boolean likedByCurrentUser) {
+        this.likedByCurrentUser = likedByCurrentUser;
     }
 }

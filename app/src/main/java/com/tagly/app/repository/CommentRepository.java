@@ -14,4 +14,5 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
             User postOwner,
             User user
     );
+    List<Comment> findByParentComment(Comment parentComment);
 }

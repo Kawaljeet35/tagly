@@ -23,6 +23,9 @@ export default function Posts({
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState([]);
+  const [hiddenReplies, setHiddenReplies] = useState(new Set());
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [replyText, setReplyText] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [editedContent, setEditedContent] = useState(content);
@@ -79,6 +82,113 @@ export default function Posts({
       }
     } catch (error) {
       console.error(error);
+    }
+  };
+
+  const handleReply = async (commentId) => {
+    if (!replyText.trim()) return;
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/posts/comments/${commentId}/reply`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify(replyText),
+        },
+      );
+
+      if (response.ok) {
+        setReplyText("");
+        setReplyingTo(null);
+        setLocalCommentsCount((prev) => prev + 1);
+        await fetchComments();
+      }
+    } catch (error) {
+      console.error("Error adding reply:", error);
+    }
+  };
+
+  const handleCommentLike = async (commentId) => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/posts/comments/${commentId}/like`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        },
+      );
+
+      if (response.ok) {
+        setComments((prevComments) =>
+          prevComments.map((comment) => {
+            if (comment.id !== commentId) {
+              return comment;
+            }
+
+            const liked = !comment.likedByCurrentUser;
+
+            return {
+              ...comment,
+              likedByCurrentUser: liked,
+              likesCount: liked
+                ? comment.likesCount + 1
+                : Math.max(0, comment.likesCount - 1),
+            };
+          }),
+        );
+      } else {
+        console.error("Failed to like comment");
+      }
+    } catch (error) {
+      console.error("Error liking comment:", error);
+    }
+  };
+
+  const handleDeleteComment = async (comment) => {
+    const confirmDelete = window.confirm(
+      "Would you like to delete this comment?",
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/posts/comments/${comment.id}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        },
+      );
+
+      if (response.ok) {
+        const deletedCommentCount = comment.parentCommentId
+          ? 1
+          : 1 +
+            comments.filter((reply) => reply.parentCommentId === comment.id)
+              .length;
+
+        setComments((prevComments) =>
+          prevComments.filter(
+            (existingComment) =>
+              existingComment.id !== comment.id &&
+              existingComment.parentCommentId !== comment.id,
+          ),
+        );
+
+        setLocalCommentsCount((prev) =>
+          Math.max(0, prev - deletedCommentCount),
+        );
+      }
+    } catch (error) {
+      console.error("Error deleting comment:", error);
     }
   };
 
@@ -147,6 +257,20 @@ export default function Posts({
     } catch (error) {
       console.error(error);
     }
+  };
+
+  const toggleReplies = (commentId) => {
+    setHiddenReplies((prev) => {
+      const updated = new Set(prev);
+
+      if (updated.has(commentId)) {
+        updated.delete(commentId);
+      } else {
+        updated.add(commentId);
+      }
+
+      return updated;
+    });
   };
 
   const formatCommentTimestamp = (timestamp) => {
@@ -573,38 +697,163 @@ export default function Posts({
           </div>
 
           <div className="mt-4 space-y-4">
-            {comments.map((comment) => (
-              <div key={comment.id} className="flex gap-3">
-                <img
-                  src={comment.user?.profilePictureUrl || ProfilePic}
-                  alt=""
-                  className="w-9 h-9 rounded-full object-cover flex-shrink-0"
-                />
+            {comments.map((comment) => {
+              if (
+                comment.parentCommentId &&
+                hiddenReplies.has(comment.parentCommentId)
+              ) {
+                return null;
+              }
 
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-baseline gap-2">
-                    <p className="font-semibold text-sm text-gray-900">
-                      {comment.user?.name || comment.user?.username}
-                    </p>
+              return (
+                <div
+                  key={comment.id}
+                  className={`flex gap-3 ${comment.parentCommentId ? "ml-10" : ""}`}
+                >
+                  <img
+                    src={comment.user?.profilePictureUrl || ProfilePic}
+                    alt=""
+                    className="w-9 h-9 rounded-full object-cover flex-shrink-0"
+                  />
 
-                    <span className="text-xs text-gray-500">
-                      {formatCommentTimestamp(comment.createdAt)}
-                    </span>
+                  <div className="flex-1 min-w-0 flex justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-baseline gap-2">
+                        <p className="font-semibold text-sm text-gray-900">
+                          {comment.user?.name || comment.user?.username}
+                        </p>
+
+                        <span className="text-xs text-gray-500">
+                          {formatCommentTimestamp(comment.createdAt)}
+                        </span>
+                      </div>
+
+                      <p className="text-sm text-gray-800 break-words mt-0.5">
+                        {comment.content}
+                      </p>
+
+                      <div className="flex items-center gap-3 mt-1">
+                        {!comment.parentCommentId && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setReplyingTo(
+                                  replyingTo === comment.id ? null : comment.id,
+                                );
+                                setReplyText("");
+                              }}
+                              className="text-xs font-semibold text-gray-500 hover:text-gray-800"
+                            >
+                              Reply
+                            </button>
+
+                            {comments.some(
+                              (reply) => reply.parentCommentId === comment.id,
+                            ) && (
+                              <button
+                                type="button"
+                                onClick={() => toggleReplies(comment.id)}
+                                className="text-xs font-semibold text-gray-500 hover:text-gray-800"
+                              >
+                                {hiddenReplies.has(comment.id)
+                                  ? `Show replies (${
+                                      comments.filter(
+                                        (reply) =>
+                                          reply.parentCommentId === comment.id,
+                                      ).length
+                                    })`
+                                  : "Hide replies"}
+                              </button>
+                            )}
+                          </>
+                        )}
+
+                        {(comment.user?.username === currentUsername ||
+                          username === currentUsername) && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteComment(comment)}
+                            className="text-xs font-semibold text-red-500 hover:text-red-700"
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
+
+                      {replyingTo === comment.id &&
+                        !comment.parentCommentId && (
+                          <div className="mt-2 space-y-2">
+                            <input
+                              type="text"
+                              value={replyText}
+                              onChange={(e) => setReplyText(e.target.value)}
+                              placeholder="Write a reply..."
+                              className="w-full border rounded-full px-4 py-2 text-sm outline-none"
+                            />
+
+                            <div className="flex justify-end gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleReply(comment.id)}
+                                className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-full text-sm"
+                              >
+                                Reply
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setReplyingTo(null);
+                                  setReplyText("");
+                                }}
+                                className="text-gray-500 hover:text-gray-800 px-3 py-2 text-sm"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                    </div>
+                    <div className="flex flex-col items-center pt-1">
+                      <button
+                        type="button"
+                        onClick={() => handleCommentLike(comment.id)}
+                        className={`hover:scale-110 transition-transform ${
+                          comment.likedByCurrentUser
+                            ? "text-red-500"
+                            : "text-gray-400 hover:text-red-400"
+                        }`}
+                        aria-label="Like comment"
+                      >
+                        <svg
+                          className="w-5 h-5"
+                          viewBox="0 0 24 24"
+                          fill={
+                            comment.likedByCurrentUser ? "currentColor" : "none"
+                          }
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            d="M20.8 8.7C20.8 5.7 18.4 3.5 15.5 3.5C13.8 3.5 12.3 4.3 11.4 5.6C10.5 4.3 9 3.5 7.3 3.5C4.4 3.5 2 5.7 2 8.7C2 12.4 5.2 15.1 11.4 20.1C11.6 20.3 11.9 20.3 12.1 20.1C18.3 15.1 20.8 12.4 20.8 8.7Z"
+                            stroke="currentColor"
+                            strokeWidth="1.8"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </button>
+
+                      {comment.likesCount > 0 && (
+                        <span className="text-sm text-gray-500 mt-0.5">
+                          {comment.likesCount}
+                        </span>
+                      )}
+                    </div>
                   </div>
-
-                  <p className="text-sm text-gray-800 break-words mt-0.5">
-                    {comment.content}
-                  </p>
-
-                  <button
-                    type="button"
-                    className="text-xs font-semibold text-gray-500 hover:text-gray-800 mt-1"
-                  >
-                    Reply
-                  </button>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

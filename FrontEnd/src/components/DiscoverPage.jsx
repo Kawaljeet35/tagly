@@ -31,7 +31,7 @@ export default function DiscoverPage({ handleLogout }) {
   const fetchVideos = async () => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/posts`,
+        `${import.meta.env.VITE_API_URL}/api/posts/discover`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -41,9 +41,7 @@ export default function DiscoverPage({ handleLogout }) {
 
       const data = await response.json();
 
-      const videoPosts = data.filter((post) => post.mediaType === "video");
-
-      setVideos(videoPosts);
+      setVideos(data);
     } catch (error) {
       console.error("Error fetching videos:", error);
     }
