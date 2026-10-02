@@ -9,10 +9,10 @@ import java.util.List;
 
 public interface CommentRepository extends JpaRepository<Comment, Long> {
     List<Comment> findByPostOrderByCreatedAtAsc(Post post);
-    List<Comment> findByPostUserOrderByCreatedAtDesc(User user);
     List<Comment> findByPostUserAndUserNotOrderByCreatedAtDesc(
             User postOwner,
             User user
     );
     List<Comment> findByParentComment(Comment parentComment);
+    boolean existsByPostAndUser(Post post, User user);
 }

@@ -29,6 +29,8 @@ public class Post {
 
     private int commentsCount = 0;
 
+    private int sharesCount = 0;
+
     private String mediaUrl;
 
     private String mediaType;
@@ -93,6 +95,14 @@ public class Post {
 
     public void setCommentsCount(int commentsCount) {
         this.commentsCount = commentsCount;
+    }
+
+    public int getSharesCount() {
+        return sharesCount;
+    }
+
+    public void setSharesCount(int sharesCount) {
+        this.sharesCount = sharesCount;
     }
 
     public String getMediaUrl() {

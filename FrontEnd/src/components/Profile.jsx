@@ -566,6 +566,8 @@ export default function Profile({ handleLogout }) {
                 mediaType={post.mediaType}
                 likesCount={post.likesCount}
                 commentsCount={post.commentsCount}
+                commentedByCurrentUser={post.commentedByCurrentUser}
+                sharesCount={post.sharesCount}
                 profilePictureUrl={post.profilePictureUrl}
                 username={post.username}
                 currentUsername={currentUser?.username}

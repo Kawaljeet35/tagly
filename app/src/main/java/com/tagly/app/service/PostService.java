@@ -91,33 +91,6 @@ public class PostService {
         }
     }
 
-    public List<PostResponse> getPostsByUser(String username) {
-        Optional<User> user = userRepository.findByUsername(username);
-        if(user.isPresent()){
-            User ourUser = user.get();
-            List<Post> posts = postRepository.findByUserOrderByCreatedAtDesc(ourUser);
-            List<PostResponse> responses = new ArrayList<>();
-            for(Post post: posts){
-                PostResponse response = new PostResponse();
-                response.setId(post.getId());
-                response.setContent(post.getContent());
-                response.setUsername(post.getUser().getUsername());
-                response.setCreatedAt(post.getCreatedAt());
-                response.setLikesCount(post.getLikesCount());
-                response.setCommentsCount(post.getCommentsCount());
-                response.setMediaUrl(post.getMediaUrl());
-                response.setMediaType(post.getMediaType());
-                response.setLikedByCurrentUser(
-                        likeRepository.findByUserAndPost(ourUser, post).isPresent()
-                );
-                responses.add(response);
-            }
-            return responses;
-        } else {
-            throw new RuntimeException("User not found");
-        }
-    }
-
     public List<PostResponse> getPostsByUserId(Long userId, String currentUsername) {
 
         User profileUser = userRepository.findById(userId)
@@ -150,6 +123,7 @@ public class PostService {
 
             response.setLikesCount(post.getLikesCount());
             response.setCommentsCount(post.getCommentsCount());
+            response.setSharesCount(post.getSharesCount());
 
             response.setMediaUrl(post.getMediaUrl());
             response.setMediaType(post.getMediaType());
@@ -158,6 +132,10 @@ public class PostService {
                     likeRepository
                             .findByUserAndPost(currentUser, post)
                             .isPresent()
+            );
+
+            response.setCommentedByCurrentUser(
+                    commentRepository.existsByPostAndUser(post, currentUser)
             );
 
             response.setProfilePictureUrl(
@@ -211,11 +189,13 @@ public class PostService {
                 response.setCreatedAt(post.getCreatedAt());
                 response.setLikesCount(post.getLikesCount());
                 response.setCommentsCount(post.getCommentsCount());
+                response.setSharesCount(post.getSharesCount());
                 response.setMediaUrl(post.getMediaUrl());
                 response.setMediaType(post.getMediaType());
                 response.setLikedByCurrentUser(
                         likeRepository.findByUserAndPost(ourUser, post).isPresent()
                 );
+                response.setCommentedByCurrentUser(commentRepository.existsByPostAndUser(post, ourUser));
                 response.setProfilePictureUrl(post.getUser().getProfilePictureUrl());
                 responses.add(response);
             }

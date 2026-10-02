@@ -10,9 +10,11 @@ public class PostResponse {
     private LocalDateTime createdAt;
     private int likesCount;
     private int commentsCount;
+    private int sharesCount;
     private String mediaUrl;
     private String mediaType;
     private boolean likedByCurrentUser;
+    private boolean commentedByCurrentUser;
     private String profilePictureUrl;
 
     public Long getId() {
@@ -71,6 +73,14 @@ public class PostResponse {
         this.commentsCount = commentsCount;
     }
 
+    public int getSharesCount() {
+        return sharesCount;
+    }
+
+    public void setSharesCount(int sharesCount) {
+        this.sharesCount = sharesCount;
+    }
+
     public String getMediaUrl() {
         return mediaUrl;
     }
@@ -93,6 +103,14 @@ public class PostResponse {
 
     public void setLikedByCurrentUser(boolean likedByCurrentUser) {
         this.likedByCurrentUser = likedByCurrentUser;
+    }
+
+    public boolean isCommentedByCurrentUser() {
+        return commentedByCurrentUser;
+    }
+
+    public void setCommentedByCurrentUser(boolean commentedByCurrentUser) {
+        this.commentedByCurrentUser = commentedByCurrentUser;
     }
 
     public String getProfilePictureUrl() {

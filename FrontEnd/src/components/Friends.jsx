@@ -77,7 +77,7 @@ export default function Friends({ handleLogout, profilePictureUrl }) {
 
   const acceptRequest = async (requestId) => {
     try {
-      await fetch(
+      const response = await fetch(
         `${import.meta.env.VITE_API_URL}/api/friends/accept/${requestId}`,
         {
           method: "PUT",
@@ -87,8 +87,16 @@ export default function Friends({ handleLogout, profilePictureUrl }) {
         },
       );
 
-      fetchFriendRequests();
-      fetchFriends();
+      if (!response.ok) {
+        const responseText = await response.text();
+        throw new Error(
+          `Failed to accept friend request: ${response.status} ${responseText}`,
+        );
+      }
+
+      await fetchFriendRequests();
+      await fetchFriends();
+      await fetchMyFriends();
     } catch (error) {
       console.error(error);
     }
@@ -444,6 +452,27 @@ export default function Friends({ handleLogout, profilePictureUrl }) {
                                 className="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-lg text-sm"
                               >
                                 Message
+                              </button>
+                            ) : requests.some(
+                                (request) =>
+                                  request.sender.id === friendUser.id,
+                              ) ? (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+
+                                  const request = requests.find(
+                                    (request) =>
+                                      request.sender.id === friendUser.id,
+                                  );
+
+                                  if (request) {
+                                    acceptRequest(request.id);
+                                  }
+                                }}
+                                className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg text-sm"
+                              >
+                                Accept Request
                               </button>
                             ) : friendStatuses[friendUser.id] === "PENDING" ||
                               sentRequests.includes(friendUser.id) ? (
