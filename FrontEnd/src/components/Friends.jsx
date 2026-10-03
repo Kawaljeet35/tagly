@@ -296,11 +296,13 @@ export default function Friends({ handleLogout, profilePictureUrl }) {
         profilePictureUrl={currentUser?.profilePictureUrl}
       />
 
-      <main className="pt-[80px] pb-10 px-4">
+      <main className="pt-[80px] pb-10 px-4 min-h-screen bg-stone-100 dark:bg-slate-800">
         <div className="max-w-5xl mx-auto">
           {/* Page Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Friends</h1>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-300">
+              Friends
+            </h1>
             <p className="text-gray-500 mt-1">
               Manage your friend requests and connections
             </p>
@@ -309,7 +311,7 @@ export default function Friends({ handleLogout, profilePictureUrl }) {
           {/* Summary Cards */}
           {!isOtherUserProfile && (
             <div className="grid grid-cols-1 gap-4 mb-8">
-              <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+              <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl p-5 shadow-sm">
                 <p className="text-sm text-gray-500">Pending Requests</p>
 
                 <p className="text-3xl font-bold text-teal-600 mt-1">
@@ -322,8 +324,8 @@ export default function Friends({ handleLogout, profilePictureUrl }) {
           {!isOtherUserProfile && (
             <>
               {/* Friend Requests */}
-              <section className="bg-white border border-gray-200 rounded-xl shadow-sm mb-8 overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-200">
+              <section className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl shadow-sm mb-8 overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-200 dark:border-slate-700">
                   <h2 className="text-xl font-bold text-gray-900">
                     Friend Requests
                   </h2>
@@ -342,7 +344,7 @@ export default function Friends({ handleLogout, profilePictureUrl }) {
                     requests.map((request) => (
                       <div
                         key={request.id}
-                        className="flex items-center gap-4 py-4 border-b border-gray-100 last:border-b-0"
+                        className="flex items-center gap-4 py-4 border-b border-gray-100 dark:border-slate-700 last:border-b-0"
                       >
                         <img
                           src={request.sender.profilePictureUrl}
@@ -351,7 +353,7 @@ export default function Friends({ handleLogout, profilePictureUrl }) {
                         />
 
                         <div className="flex-1">
-                          <p className="font-semibold text-gray-900">
+                          <p className="font-semibold text-gray-900 dark:text-gray-300">
                             {request.sender.name}
                           </p>
 
@@ -384,8 +386,8 @@ export default function Friends({ handleLogout, profilePictureUrl }) {
           )}
 
           {/* Friends */}
-          <section className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200">
+          <section className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl shadow-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-slate-700">
               <h2 className="text-xl font-bold text-gray-900">
                 Friends ({filteredFriends.length})
               </h2>
@@ -423,7 +425,7 @@ export default function Friends({ handleLogout, profilePictureUrl }) {
                     <div
                       key={friend.id}
                       onClick={() => navigate(`/users/${friendUser.id}`)}
-                      className="border border-gray-200 rounded-xl p-5 hover:shadow-md transition-shadow cursor-pointer"
+                      className="border border-gray-200 dark:border-slate-700 rounded-xl p-5 hover:shadow-md transition-shadow cursor-pointer"
                     >
                       <div className="flex flex-col items-center text-center">
                         <img
@@ -432,7 +434,7 @@ export default function Friends({ handleLogout, profilePictureUrl }) {
                           className="w-20 h-20 rounded-full object-cover mb-3"
                         />
 
-                        <p className="font-semibold text-gray-900">
+                        <p className="font-semibold text-gray-900 dark:text-gray-300">
                           {friendUser.name}
                         </p>
 

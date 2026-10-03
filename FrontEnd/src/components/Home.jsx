@@ -83,38 +83,44 @@ export default function Home({ handleLogout }) {
         handleLogout={handleLogout}
         profilePictureUrl={user?.profilePictureUrl}
       />
-      <AddStory />
-      <CreatePost
-        handleUploadClick={handleUploadClick}
-        onPostCreated={fetchPosts}
-        profilePictureUrl={user?.profilePictureUrl}
-      />
-      {isUploadVisible && (
-        <UploadOverlay closeUpload={closeUpload} onPostCreated={fetchPosts} />
-      )}
-      <div className="pb-[10px]">
-        {posts.map((post, index) => {
-          return (
-            <Posts
-              key={post.id}
-              id={post.id}
-              name={post.name}
-              likedByCurrentUser={post.likedByCurrentUser}
-              content={post.content}
-              createdAt={formatTimestamp(post.createdAt)}
-              mediaUrl={post.mediaUrl}
-              mediaType={post.mediaType}
-              likesCount={post.likesCount}
-              commentsCount={post.commentsCount}
-              commentedByCurrentUser={post.commentedByCurrentUser}
-              sharesCount={post.sharesCount}
-              profilePictureUrl={post.profilePictureUrl}
-              username={post.username}
-              currentUsername={user?.username}
-              onDelete={fetchPosts}
-            />
-          );
-        })}
+
+      <div className="flow-root min-h-screen bg-stone-100 dark:bg-slate-800">
+        <AddStory />
+
+        <CreatePost
+          handleUploadClick={handleUploadClick}
+          onPostCreated={fetchPosts}
+          profilePictureUrl={user?.profilePictureUrl}
+        />
+
+        {isUploadVisible && (
+          <UploadOverlay closeUpload={closeUpload} onPostCreated={fetchPosts} />
+        )}
+
+        <div className="pb-[10px]">
+          {posts.map((post, index) => {
+            return (
+              <Posts
+                key={post.id}
+                id={post.id}
+                name={post.name}
+                likedByCurrentUser={post.likedByCurrentUser}
+                content={post.content}
+                createdAt={formatTimestamp(post.createdAt)}
+                mediaUrl={post.mediaUrl}
+                mediaType={post.mediaType}
+                likesCount={post.likesCount}
+                commentsCount={post.commentsCount}
+                commentedByCurrentUser={post.commentedByCurrentUser}
+                sharesCount={post.sharesCount}
+                profilePictureUrl={post.profilePictureUrl}
+                username={post.username}
+                currentUsername={user?.username}
+                onDelete={fetchPosts}
+              />
+            );
+          })}
+        </div>
       </div>
     </>
   );

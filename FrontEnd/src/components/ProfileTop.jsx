@@ -246,7 +246,7 @@ export default function ProfileTop({
         )}
 
         <div className="flex items-center justify-between absolute -bottom-[72px] left-[225px] right-0">
-          <span className="font-bold text-2xl">{name}</span>
+          <span className="font-bold text-2xl text-gray-300">{name}</span>
           <div className="flex items-center justify-between gap-2">
             {isOwnProfile && (
               <button className="rounded-md bg-blue-600 py-2 px-3 flex items-center justify-between gap-1">
@@ -364,13 +364,13 @@ export default function ProfileTop({
         </div>
       </div>
       <hr className="w-[80%] max-w-4xl border-t-1 border-gray-400 mx-auto mt-[108px]"></hr>
-      <div className="w-[80%] max-w-4xl mx-auto flex justify-between items-center mt-2 bg-white rounded-xl shadow-sm px-2 py-2">
-        <ul className="flex items-center justify-start gap-2">
+      <div className="w-[80%] max-w-4xl mx-auto flex justify-between items-center mt-2 bg-white dark:bg-slate-900 rounded-xl shadow-sm px-2 py-2">
+        <ul className="flex items-center justify-start gap-2 text-gray-900 dark:text-gray-300">
           <li
             className={`py-2 px-4 rounded-md ${
               activeTab === "posts"
-                ? "bg-gray-200 font-semibold"
-                : "hover:bg-gray-300"
+                ? "bg-gray-200 font-semibold text-gray-900"
+                : "hover:bg-gray-300 dark:hover:bg-slate-700"
             }`}
           >
             <button onClick={() => setActiveTab("posts")}>Posts</button>
@@ -379,14 +379,14 @@ export default function ProfileTop({
           <li
             className={`py-2 px-4 rounded-md ${
               activeTab === "about"
-                ? "bg-gray-200 font-semibold"
-                : "hover:bg-gray-300"
+                ? "bg-gray-200 font-semibold text-gray-900"
+                : "hover:bg-gray-300 dark:hover:bg-slate-700"
             }`}
           >
             <button onClick={() => setActiveTab("about")}>About</button>
           </li>
 
-          <li className="hover:bg-gray-300 py-2 px-4 rounded-md">
+          <li className="py-2 px-4 rounded-md hover:bg-gray-300 dark:hover:bg-slate-700">
             <button onClick={() => navigate(`/users/${userId}/friends`)}>
               Friends
             </button>
@@ -395,8 +395,8 @@ export default function ProfileTop({
           <li
             className={`py-2 px-4 rounded-md ${
               activeTab === "photos"
-                ? "bg-gray-200 font-semibold"
-                : "hover:bg-gray-300"
+                ? "bg-gray-200 font-semibold text-gray-900"
+                : "hover:bg-gray-300 dark:hover:bg-slate-700"
             }`}
           >
             <button onClick={() => setActiveTab("photos")}>Photos</button>
@@ -405,14 +405,14 @@ export default function ProfileTop({
           <li
             className={`py-2 px-4 rounded-md ${
               activeTab === "videos"
-                ? "bg-gray-200 font-semibold"
-                : "hover:bg-gray-300"
+                ? "bg-gray-200 font-semibold text-gray-900"
+                : "hover:bg-gray-300 dark:hover:bg-slate-700"
             }`}
           >
             <button onClick={() => setActiveTab("videos")}>Videos</button>
           </li>
 
-          <li className="hover:bg-gray-300 py-2 px-4 rounded-md">
+          <li className="hover:bg-gray-300 dark:hover:bg-slate-700 py-2 px-4 rounded-md">
             <a href="#">More</a>
           </li>
         </ul>

@@ -42,7 +42,7 @@ export default function CreatePost({
   };
 
   return (
-    <div className="bg-white shadow rounded-2xl flex-col justify-between px-4 pt-4 pb-2 w-[95%] max-w-lg mx-auto mt-3 space-y-2">
+    <div className="bg-white dark:bg-slate-900 shadow rounded-2xl flex-col justify-between px-4 pt-4 pb-2 w-[95%] max-w-lg mx-auto mt-3 space-y-2">
       <div className="flex items-center justify-start space-x-2">
         <div className="bg-stone-200 rounded-full">
           <svg
@@ -77,7 +77,9 @@ export default function CreatePost({
         </div>
 
         <div>
-          <p className="font-semibold text-base text-slate-500">Create Post</p>
+          <p className="font-semibold text-base text-slate-500 dark:text-gray-300">
+            Create Post
+          </p>
         </div>
       </div>
 
@@ -88,7 +90,7 @@ export default function CreatePost({
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder="What's on your mind?"
-          className="input-default rounded-xl p-[14px] pl-14 bg-stone-100 border-none text-base w-full"
+          className="input-default rounded-xl p-[14px] pl-14 bg-stone-100 dark:bg-slate-800 border-none text-base text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 w-full"
         />
 
         <div className="absolute left-3 top-3">
@@ -143,7 +145,9 @@ export default function CreatePost({
               </g>
             </svg>
 
-            <p className="font-semibold text-lg text-slate-500">Photo</p>
+            <p className="font-semibold text-lg text-slate-500 dark:text-gray-300">
+              Photo
+            </p>
           </div>
         </button>
 
@@ -173,7 +177,9 @@ export default function CreatePost({
               </g>
             </svg>
 
-            <p className="font-semibold text-lg text-slate-500">Video</p>
+            <p className="font-semibold text-lg text-slate-500 dark:text-gray-300">
+              Video
+            </p>
           </div>
         </button>
       </div>

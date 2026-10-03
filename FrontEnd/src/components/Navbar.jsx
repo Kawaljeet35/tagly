@@ -2,15 +2,23 @@ import CircularTaglyLogo from "/favicon.ico";
 import TaglyLogo from "../assets/mainLogoTagly.svg";
 import ProfilePic from "../assets/pic.png";
 import { useState, useEffect } from "react";
+import emailjs from "emailjs-com";
 import NavProfilePopUp from "./NavProfilePopUp";
 import { Link, useLocation } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import ChatWindow from "./ChatWindow";
 
+const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
+const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
+const userId = import.meta.env.VITE_EMAILJS_USER_ID;
+
 export default function Navbar({ handleLogout, profilePictureUrl }) {
   const location = useLocation();
   const [selectedPage, setSelectedPage] = useState("HomePage");
   const [popUpVisible, setPopUpVisible] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [feedbackText, setFeedbackText] = useState("");
+  const [feedbackStatus, setFeedbackStatus] = useState("idle");
   const [tooltip, setTooltip] = useState({
     visible: false,
     text: "",
@@ -31,6 +39,12 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
   const [searchText, setSearchText] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
+  const [darkMode, setDarkMode] = useState(
+    localStorage.getItem("darkMode") === "true",
+  );
+
+  const [showDisplaySettings, setShowDisplaySettings] = useState(false);
+
   const navigate = useNavigate();
 
   const allNotifications = [
@@ -84,6 +98,23 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
   function handlePopUp() {
     setPopUpVisible(!popUpVisible);
   }
+
+  const sendFeedback = (e) => {
+    e.preventDefault();
+
+    setFeedbackStatus("sending");
+
+    emailjs
+      .sendForm(serviceId, templateId, e.target, userId)
+      .then(() => {
+        setFeedbackStatus("success");
+        setFeedbackText("");
+      })
+      .catch((error) => {
+        console.error("Feedback sending failed:", error);
+        setFeedbackStatus("error");
+      });
+  };
 
   const fetchPendingRequests = async () => {
     try {
@@ -320,8 +351,13 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
     setPreviousNotificationCount(currentCount);
   }, [pendingRequests, likeNotifications, commentNotifications]);
 
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", darkMode);
+    localStorage.setItem("darkMode", darkMode);
+  }, [darkMode]);
+
   return (
-    <nav className="fixed top-0 w-full bg-white flex items-center px-2 py-1 shadow z-10">
+    <nav className="fixed top-0 w-full bg-white dark:bg-slate-950 flex items-center px-2 py-1 shadow z-10">
       <Link
         to="/"
         className="flex items-center py-2 px-4 gap-2 hover:scale-110 flex-shrink-0"
@@ -340,7 +376,7 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
             setSearchText(e.target.value);
             searchUsers(e.target.value);
           }}
-          className="input-default rounded-full px-2 py-1 pl-10 bg-stone-100 border-none text-lg"
+          className="input-default rounded-full px-2 py-1 pl-10 bg-stone-100 dark:bg-slate-800 border-none text-lg text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
         />
 
         <svg
@@ -367,7 +403,7 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
         </svg>
 
         {searchResults.length > 0 && (
-          <div className="absolute top-full left-0 mt-1 w-full bg-white border rounded-lg shadow-lg z-50">
+          <div className="absolute top-full left-0 mt-1 w-full bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-lg shadow-lg z-50">
             {searchResults.map((user) => (
               <div
                 key={user.id}
@@ -376,7 +412,7 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
                   setSearchText("");
                   setSearchResults([]);
                 }}
-                className="flex items-center gap-3 p-3 border-b hover:bg-gray-100 cursor-pointer"
+                className="flex items-center gap-3 p-3 border-b border-gray-200 dark:border-slate-700 hover:bg-gray-100 dark:hover:bg-slate-800 cursor-pointer"
               >
                 <img
                   src={user.profilePictureUrl}
@@ -389,7 +425,7 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
                     {user.name}
                   </p>
 
-                  <p className="text-sm text-gray-500 leading-5">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 leading-5">
                     @{user.username}
                   </p>
                 </div>
@@ -629,18 +665,22 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
           </svg>
         </button>
         {showNotifications && (
-          <div className="absolute right-0 top-14 w-72 max-h-96 overflow-y-auto bg-white shadow-lg rounded-xl border z-50">
-            <div className="p-3 border-b font-semibold">Notifications</div>
+          <div className="absolute right-0 top-14 w-72 max-h-96 overflow-y-auto bg-white dark:bg-slate-900 shadow-lg rounded-xl border border-gray-200 dark:border-slate-700 z-50">
+            <div className="p-3 border-b border-gray-200 dark:border-slate-700 font-semibold text-black dark:text-white">
+              Notifications
+            </div>
 
             {allNotifications.length === 0 ? (
-              <p className="p-4 text-gray-500 text-sm">No notifications</p>
+              <p className="p-4 text-gray-500 dark:text-gray-400 text-sm">
+                No notifications
+              </p>
             ) : (
               allNotifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className="p-3 border-b hover:bg-gray-50"
+                  className="p-3 border-b border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800"
                 >
-                  <p className="text-sm">
+                  <p className="text-sm text-black dark:text-gray-200">
                     <span className="font-semibold">
                       {notification.user.name || notification.user.username}
                     </span>{" "}
@@ -694,25 +734,31 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
           </svg>
         </button>
         {showMessages && (
-          <div className="absolute right-16 top-14 w-72 bg-white shadow-lg rounded-xl border z-50">
-            <div className="p-3 border-b font-semibold">Messages</div>
+          <div className="absolute right-16 top-14 w-72 bg-white dark:bg-slate-900 shadow-lg rounded-xl border border-gray-200 dark:border-slate-700 z-50">
+            <div className="p-3 border-b border-gray-200 dark:border-slate-700 font-semibold text-black dark:text-white">
+              Messages
+            </div>
 
             {inboxUsers.length === 0 ? (
-              <p className="p-4 text-gray-500 text-sm">No conversations yet</p>
+              <p className="p-4 text-gray-500 dark:text-gray-400 text-sm">
+                No conversations yet
+              </p>
             ) : (
               inboxUsers.map((user) => (
                 <div
                   key={user.userId}
                   onClick={() => openChat(user)}
-                  className={`p-3 border-b cursor-pointer ${
+                  className={`p-3 border-b border-gray-200 dark:border-slate-700 cursor-pointer ${
                     unreadChats.includes(user.userId)
-                      ? "bg-cyan-100 hover:bg-cyan-200"
-                      : "hover:bg-gray-50"
+                      ? "bg-cyan-100 dark:bg-cyan-900/50 hover:bg-cyan-200 dark:hover:bg-cyan-900"
+                      : "hover:bg-gray-50 dark:hover:bg-slate-800"
                   }`}
                 >
-                  <p className="font-semibold">{user.name}</p>
+                  <p className="font-semibold text-black dark:text-white">
+                    {user.name}
+                  </p>
 
-                  <p className="text-sm text-gray-500 truncate">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
                     {user.latestSenderUsername ===
                     localStorage.getItem("username")
                       ? `You: ${user.latestMessage}`
@@ -741,9 +787,17 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
           </button>
           {popUpVisible && (
             <div className="absolute right-0 top-10">
-              {" "}
-              {/* Adjust position here */}
-              <NavProfilePopUp handleLogout={handleLogout} />
+              <NavProfilePopUp
+                handleLogout={handleLogout}
+                onGiveFeedback={() => {
+                  setPopUpVisible(false);
+                  setShowFeedback(true);
+                }}
+                onDisplaySettings={() => {
+                  setPopUpVisible(false);
+                  setShowDisplaySettings(true);
+                }}
+              />
             </div>
           )}
         </div>
@@ -759,6 +813,183 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
           }}
         >
           {tooltip.text}
+        </div>
+      )}
+
+      {showFeedback && (
+        <div
+          className="fixed inset-0 bg-black/40 flex items-center justify-center z-[100] p-4"
+          onClick={() => {
+            setShowFeedback(false);
+            setFeedbackStatus("idle");
+            setFeedbackText("");
+          }}
+        >
+          <div
+            className="bg-white dark:bg-slate-900 text-black dark:text-white rounded-2xl shadow-2xl w-full max-w-md p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {feedbackStatus === "success" ? (
+              <div className="text-center py-6">
+                <div className="text-5xl mb-4">✓</div>
+
+                <h2 className="text-2xl font-bold text-black mb-2">
+                  Feedback Sent
+                </h2>
+
+                <p className="text-gray-600 mb-6">
+                  Thank you for helping us improve Tagly!
+                </p>
+
+                <button
+                  onClick={() => {
+                    setShowFeedback(false);
+                    setFeedbackStatus("idle");
+                  }}
+                  className="bg-teal-600 text-white px-5 py-2 rounded-lg hover:bg-teal-700"
+                >
+                  Close
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between mb-5">
+                  <h2 className="text-2xl font-bold text-black dark:text-gray-300">
+                    Give Feedback
+                  </h2>
+
+                  <button
+                    onClick={() => {
+                      setShowFeedback(false);
+                      setFeedbackStatus("idle");
+                      setFeedbackText("");
+                    }}
+                    className="text-gray-500 hover:text-black text-2xl leading-none"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <p className="text-gray-600 dark:text-gray-400 mb-6">
+                  Help us improve Tagly by sharing your thoughts, suggestions,
+                  or anything that you think could be better.
+                </p>
+
+                <form onSubmit={sendFeedback}>
+                  <input
+                    type="text"
+                    name="sender_name"
+                    value={currentUser?.name || ""}
+                    readOnly
+                    className="w-full mb-3 px-3 py-2 border border-gray-300 dark:border-slate-700 rounded-lg bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-200"
+                  />
+
+                  <input
+                    type="email"
+                    name="sender_email"
+                    value={currentUser?.email || ""}
+                    readOnly
+                    className="w-full mb-3 px-3 py-2 border border-gray-300 dark:border-slate-700 rounded-lg bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-200"
+                  />
+
+                  <textarea
+                    name="message"
+                    required
+                    value={feedbackText}
+                    onChange={(e) => {
+                      setFeedbackText(e.target.value);
+                      if (feedbackStatus === "error") {
+                        setFeedbackStatus("idle");
+                      }
+                    }}
+                    placeholder="Tell us what you think..."
+                    className="w-full h-32 mb-4 px-3 py-2 border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
+
+                  {feedbackStatus === "error" && (
+                    <p className="text-red-500 text-sm mb-3">
+                      Failed to send feedback. Please try again.
+                    </p>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={feedbackStatus === "sending"}
+                    className="w-full bg-teal-600 hover:bg-teal-700 disabled:bg-teal-400 text-white py-2.5 rounded-lg font-semibold"
+                  >
+                    {feedbackStatus === "sending"
+                      ? "Sending..."
+                      : "Send Feedback"}
+                  </button>
+                </form>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {showDisplaySettings && (
+        <div
+          className="fixed inset-0 bg-black/40 flex items-center justify-center z-[100] p-4"
+          onClick={() => setShowDisplaySettings(false)}
+        >
+          <div
+            className="bg-white dark:bg-slate-900 text-black dark:text-white rounded-2xl shadow-2xl w-full max-w-md p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-black dark:text-gray-300">
+                Display & Accessibility
+              </h2>
+
+              <button
+                onClick={() => setShowDisplaySettings(false)}
+                className="text-gray-500 hover:text-black text-2xl"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
+              Customize how Tagly looks and feels.
+            </p>
+
+            <div className="flex items-center justify-between py-3">
+              <div>
+                <p className="font-semibold text-black dark:text-white">
+                  {darkMode ? "Dark Mode" : "Light Mode"}
+                </p>
+
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {darkMode
+                    ? "For a lighter appearance across Tagly switch to light mode."
+                    : "For a darker appearance across Tagly switch to dark mode."}
+                </p>
+              </div>
+
+              <button
+                onClick={() => setDarkMode((prev) => !prev)}
+                className={`w-12 h-6 rounded-full p-1 transition ${
+                  darkMode ? "bg-teal-600" : "bg-gray-300"
+                }`}
+              >
+                <div
+                  className={`w-4 h-4 bg-white rounded-full transition ${
+                    darkMode ? "translate-x-6" : "translate-x-0"
+                  }`}
+                />
+              </button>
+            </div>
+
+            <div className="flex justify-end mt-6">
+              <button
+                onClick={() => setShowDisplaySettings(false)}
+                className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg"
+              >
+                Close
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

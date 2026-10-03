@@ -323,7 +323,7 @@ export default function Posts({
   };
 
   return (
-    <div className="bg-white shadow rounded-2xl flex-col  max-w-lg mx-auto mt-3 w-full">
+    <div className="bg-white dark:bg-slate-900 shadow rounded-2xl flex-col max-w-lg mx-auto mt-3 w-full">
       <div className="flex pt-3 px-4 mb-3 items-center ">
         <div className="w-12 h-12 mr-2 flex-shrink-0">
           <img
@@ -336,11 +336,11 @@ export default function Posts({
         <div className="flex justify-between w-full">
           <div className="flex flex-col justify-center ">
             <h4>
-              <span className="text-lg font-medium hover:underline">
+              <span className="text-lg font-medium text-black dark:text-white hover:underline">
                 {name}
               </span>
             </h4>
-            <p className="text-sm font-medium text-gray-500 hover:underline">
+            <p className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:underline">
               {createdAt}
             </p>
           </div>
@@ -387,20 +387,20 @@ export default function Posts({
                   </svg>
                 </button>
                 {showMenu && (
-                  <div className="absolute right-0 top-10 bg-white shadow-lg rounded-lg py-2 w-32 z-10 border">
+                  <div className="absolute right-0 top-10 bg-white dark:bg-slate-800 shadow-lg rounded-lg py-2 w-32 z-10 border border-gray-200 dark:border-slate-700">
                     <button
                       onClick={() => {
                         setIsEditing(true);
                         setShowMenu(false);
                       }}
-                      className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+                      className="block w-full text-left px-4 py-2 text-black dark:text-white hover:bg-gray-100 dark:hover:bg-slate-700"
                     >
                       Edit
                     </button>
 
                     <button
                       onClick={handleDeletePost}
-                      className="block w-full text-left px-4 py-2 text-red-500 hover:bg-gray-100"
+                      className="block w-full text-left px-4 py-2text-red-500 hover:bg-gray-100 dark:hover:bg-slate-700"
                     >
                       Delete
                     </button>
@@ -418,7 +418,7 @@ export default function Posts({
             <textarea
               value={editedContent}
               onChange={(e) => setEditedContent(e.target.value)}
-              className="w-full border rounded-lg p-3 outline-none"
+              className="w-full border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-black dark:text-white rounded-lg p-3 outline-none"
               rows={4}
             />
 
@@ -435,7 +435,7 @@ export default function Posts({
                   setIsEditing(false);
                   setEditedContent(content);
                 }}
-                className="bg-gray-200 px-4 py-2 rounded-lg"
+                className="bg-gray-200 dark:bg-slate-700 text-black dark:text-white px-4 py-2 rounded-lg"
               >
                 Cancel
               </button>
@@ -457,7 +457,7 @@ export default function Posts({
         </video>
       )}
 
-      <div className="flex py-[10px] px-4 justify-between">
+      <div className="flex py-[10px] px-4 justify-between text-black dark:text-gray-200">
         <div className="flex">
           <svg
             className="h-6 w-6"
@@ -530,7 +530,7 @@ export default function Posts({
         </div>
       </div>
 
-      <hr />
+      <hr className="border-gray-200 dark:border-slate-700" />
 
       <div className="flex justify-evenly py-[10px]">
         <button onClick={handleLike}>
@@ -567,7 +567,9 @@ export default function Posts({
                 ></path>{" "}
               </g>
             </svg>
-            <p className="font-semibold text-lg">Like</p>
+            <p className="font-semibold text-lg text-slate-500 dark:text-gray-300">
+              Like
+            </p>
           </div>
         </button>
 
@@ -616,7 +618,9 @@ export default function Posts({
                 </defs>{" "}
               </g>
             </svg>
-            <p className="font-semibold text-lg text-slate-500">Comment</p>
+            <p className="font-semibold text-lg text-slate-500 dark:text-gray-300">
+              Comment
+            </p>
           </div>
         </button>
 
@@ -645,19 +649,21 @@ export default function Posts({
                 ></path>{" "}
               </g>
             </svg>
-            <p className="font-semibold text-lg text-slate-500">Share</p>
+            <p className="font-semibold text-lg text-slate-500 dark:text-gray-300">
+              Share
+            </p>
           </div>
         </button>
       </div>
       {showComments && (
-        <div className="px-4 py-3 border-t">
+        <div className="px-4 py-3 border-t border-gray-200 dark:border-slate-700">
           <div className="flex gap-2">
             <input
               type="text"
               placeholder="Write a comment..."
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
-              className="flex-1 border rounded-full px-4 py-2 outline-none"
+              className="flex-1 border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 rounded-full px-4 py-2 outline-none"
             />
 
             <button
@@ -691,16 +697,16 @@ export default function Posts({
                   <div className="flex-1 min-w-0 flex justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline gap-2">
-                        <p className="font-semibold text-sm text-gray-900">
+                        <p className="font-semibold text-sm text-gray-900 dark:text-white">
                           {comment.user?.name || comment.user?.username}
                         </p>
 
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
                           {formatCommentTimestamp(comment.createdAt)}
                         </span>
                       </div>
 
-                      <p className="text-sm text-gray-800 break-words mt-0.5">
+                      <p className="text-sm text-gray-800 dark:text-gray-200 break-words mt-0.5">
                         {comment.content}
                       </p>
 
@@ -726,7 +732,7 @@ export default function Posts({
                               <button
                                 type="button"
                                 onClick={() => toggleReplies(comment.id)}
-                                className="text-xs font-semibold text-gray-500 hover:text-gray-800"
+                                className="text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white"
                               >
                                 {hiddenReplies.has(comment.id)
                                   ? `Show replies (${
@@ -761,7 +767,7 @@ export default function Posts({
                               value={replyText}
                               onChange={(e) => setReplyText(e.target.value)}
                               placeholder="Write a reply..."
-                              className="w-full border rounded-full px-4 py-2 text-sm outline-none"
+                              className="w-full border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 rounded-full px-4 py-2 text-sm outline-none"
                             />
 
                             <div className="flex justify-end gap-2">
@@ -779,7 +785,7 @@ export default function Posts({
                                   setReplyingTo(null);
                                   setReplyText("");
                                 }}
-                                className="text-gray-500 hover:text-gray-800 px-3 py-2 text-sm"
+                                className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white px-3 py-2 text-sm"
                               >
                                 Cancel
                               </button>

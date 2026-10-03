@@ -532,7 +532,7 @@ export default function Profile({ handleLogout }) {
   }
 
   return (
-    <>
+    <div className="min-h-screen bg-stone-100 dark:bg-slate-800">
       <Navbar
         handleLogout={handleLogout}
         profilePictureUrl={currentUser?.profilePictureUrl}
@@ -659,15 +659,17 @@ export default function Profile({ handleLogout }) {
         )}
 
         {activeTab === "about" && (
-          <div className="bg-white rounded-xl shadow p-6">
+          <div className="bg-white dark:bg-slate-900 text-black dark:text-gray-200 rounded-xl shadow p-6">
             <h2 className="text-2xl font-bold mb-6">About</h2>
 
             <div className="space-y-5">
               <div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-500">Name</p>
-                    <p className="text-lg font-medium">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Name
+                    </p>
+                    <p className="text-lg font-medium text-black dark:text-gray-200">
                       {user?.name || "Not provided"}
                     </p>
                   </div>
@@ -709,20 +711,30 @@ export default function Profile({ handleLogout }) {
               </div>
 
               <div>
-                <p className="text-sm text-gray-500">Username</p>
-                <p className="text-lg font-medium">@{user?.username}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Username
+                </p>
+                <p className="text-lg font-medium text-black dark:text-gray-200">
+                  @{user?.username}
+                </p>
               </div>
 
               {user?.email && (
                 <div>
-                  <p className="text-sm text-gray-500">Email</p>
-                  <p className="text-lg font-medium">{user.email}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Email
+                  </p>
+                  <p className="text-lg font-medium text-black dark:text-gray-200">
+                    {user.email}
+                  </p>
                 </div>
               )}
 
               <div>
-                <p className="text-sm text-gray-500">Birthday</p>
-                <p className="text-lg font-medium">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Birthday
+                </p>
+                <p className="text-lg font-medium text-black dark:text-gray-200">
                   {user?.dateOfBirth
                     ? new Date(user.dateOfBirth).toLocaleDateString([], {
                         day: "numeric",
@@ -735,8 +747,10 @@ export default function Profile({ handleLogout }) {
               <div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-500">Bio</p>
-                    <p className="text-lg font-medium">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Bio
+                    </p>
+                    <p className="text-lg font-medium text-black dark:text-gray-200">
                       {user?.bio || "No bio added"}
                     </p>
                   </div>
@@ -779,8 +793,10 @@ export default function Profile({ handleLogout }) {
               <div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-500">Location</p>
-                    <p className="text-lg font-medium">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Location
+                    </p>
+                    <p className="text-lg font-medium text-black dark:text-gray-200">
                       {user?.location || "Not provided"}
                     </p>
                   </div>
@@ -821,8 +837,10 @@ export default function Profile({ handleLogout }) {
               </div>
 
               <div>
-                <p className="text-sm text-gray-500">Joined Tagly</p>
-                <p className="text-lg font-medium">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Joined Tagly
+                </p>
+                <p className="text-lg font-medium text-black dark:text-gray-200">
                   {user?.createdAt
                     ? new Date(user.createdAt).toLocaleDateString([], {
                         day: "numeric",
@@ -908,10 +926,12 @@ export default function Profile({ handleLogout }) {
 
             {/* COMMENTS SECTION */}
             {showPhotoComments && (
-              <div className="w-1/2 h-full bg-white flex flex-col">
+              <div className="w-1/2 h-full bg-white dark:bg-slate-900 text-black dark:text-gray-200 flex flex-col">
                 {/* COMMENTS HEADER */}
-                <div className="flex items-center justify-between p-4 border-b flex-shrink-0">
-                  <h3 className="font-semibold text-lg">Comments</h3>
+                <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-slate-700 flex-shrink-0">
+                  <h3 className="font-semibold text-lg text-black dark:text-gray-300">
+                    Comments
+                  </h3>
 
                   <button
                     onClick={() => setShowPhotoComments(false)}
@@ -938,7 +958,7 @@ export default function Profile({ handleLogout }) {
 
                         <div className="flex-1 min-w-0">
                           <div className="flex items-baseline gap-2">
-                            <p className="font-semibold text-sm text-gray-900">
+                            <p className="font-semibold text-sm text-gray-900 dark:text-gray-300">
                               {comment.user?.name || comment.user?.username}
                             </p>
 
@@ -947,7 +967,7 @@ export default function Profile({ handleLogout }) {
                             </span>
                           </div>
 
-                          <p className="text-sm text-gray-700 break-words mt-0.5">
+                          <p className="text-sm text-gray-700 dark:text-gray-200 break-words mt-0.5">
                             {comment.content}
                           </p>
 
@@ -970,7 +990,7 @@ export default function Profile({ handleLogout }) {
                     value={photoCommentText}
                     onChange={(e) => setPhotoCommentText(e.target.value)}
                     placeholder="Write a comment..."
-                    className="flex-1 border rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-cyan-500"
+                    className="flex-1 border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-cyan-500"
                   />
 
                   <button
@@ -1055,10 +1075,12 @@ export default function Profile({ handleLogout }) {
 
             {/* COMMENTS SECTION */}
             {showVideoComments && (
-              <div className="w-1/2 shrink-0 h-full bg-white flex flex-col">
+              <div className="w-1/2 shrink-0 h-full bg-white dark:bg-slate-900 text-black dark:text-gray-200 flex flex-col">
                 {/* COMMENTS HEADER */}
-                <div className="flex items-center justify-between px-4 py-3 border-b">
-                  <h3 className="font-semibold text-gray-900">Comments</h3>
+                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-slate-700">
+                  <h3 className="font-semibold text-gray-900 dark:text-gray-300">
+                    Comments
+                  </h3>
 
                   <button
                     onClick={() => setShowVideoComments(false)}
@@ -1085,7 +1107,7 @@ export default function Profile({ handleLogout }) {
 
                         <div className="flex-1 min-w-0">
                           <div className="flex items-baseline gap-2">
-                            <p className="font-semibold text-sm text-gray-900">
+                            <p className="font-semibold text-sm text-gray-900 dark:text-gray-300">
                               {comment.user?.name || comment.user?.username}
                             </p>
 
@@ -1094,7 +1116,7 @@ export default function Profile({ handleLogout }) {
                             </span>
                           </div>
 
-                          <p className="text-sm text-gray-700 break-words mt-0.5">
+                          <p className="text-sm text-gray-700 dark:text-gray-200 break-words mt-0.5">
                             {comment.content}
                           </p>
 
@@ -1116,7 +1138,7 @@ export default function Profile({ handleLogout }) {
                     value={videoCommentText}
                     onChange={(e) => setVideoCommentText(e.target.value)}
                     placeholder="Write a comment..."
-                    className="flex-1 border rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-cyan-500"
+                    className="flex-1 border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-cyan-500"
                   />
 
                   <button
@@ -1133,14 +1155,14 @@ export default function Profile({ handleLogout }) {
       )}
       {isNameEditOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
+          <div className="bg-white dark:bg-slate-900 text-black dark:text-gray-200 rounded-xl shadow-xl w-full max-w-md p-6">
             <h2 className="text-xl font-bold mb-4">Edit Name</h2>
 
             <input
               type="text"
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
+              className="w-full border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-black dark:text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
               placeholder="Enter your name"
             />
 
@@ -1148,7 +1170,7 @@ export default function Profile({ handleLogout }) {
               <button
                 onClick={() => !nameUpdateLoading && setIsNameEditOpen(false)}
                 disabled={nameUpdateLoading}
-                className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300"
+                className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-900 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-gray-200"
               >
                 Cancel
               </button>
@@ -1170,14 +1192,14 @@ export default function Profile({ handleLogout }) {
       )}
       {isBioEditOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
+          <div className="bg-white dark:bg-slate-900 text-black dark:text-gray-200 rounded-xl shadow-xl w-full max-w-md p-6">
             <h2 className="text-xl font-bold mb-4">Edit Bio</h2>
 
             <textarea
               value={editBio}
               onChange={(e) => setEditBio(e.target.value)}
               rows={4}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-teal-500"
+              className="w-full border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-black dark:text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
               placeholder="Tell people something about yourself"
             />
 
@@ -1185,7 +1207,7 @@ export default function Profile({ handleLogout }) {
               <button
                 onClick={() => !bioUpdateLoading && setIsBioEditOpen(false)}
                 disabled={bioUpdateLoading}
-                className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300"
+                className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-900 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-gray-200"
               >
                 Cancel
               </button>
@@ -1207,14 +1229,14 @@ export default function Profile({ handleLogout }) {
       )}
       {isLocationEditOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
+          <div className="bg-white dark:bg-slate-900 text-black dark:text-gray-200 rounded-xl shadow-xl w-full max-w-md p-6">
             <h2 className="text-xl font-bold mb-4">Edit Location</h2>
 
             <input
               type="text"
               value={editLocation}
               onChange={(e) => setEditLocation(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
+              className="w-full border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-black dark:text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
               placeholder="Enter your location"
             />
 
@@ -1224,7 +1246,7 @@ export default function Profile({ handleLogout }) {
                   !locationUpdateLoading && setIsLocationEditOpen(false)
                 }
                 disabled={locationUpdateLoading}
-                className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300"
+                className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-900 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-gray-200"
               >
                 Cancel
               </button>
@@ -1244,6 +1266,6 @@ export default function Profile({ handleLogout }) {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }

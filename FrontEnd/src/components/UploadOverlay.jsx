@@ -51,13 +51,13 @@ export default function UploadOverlay({ closeUpload, onPostCreated }) {
   };
 
   return (
-    <div className="overlay fixed inset-0 z-50 bg-black bg-opacity-80 flex items-center justify-center">
-      <div className="upload-container bg-white rounded-lg shadow-lg p-4 gap-2 flex flex-col max-w-lg">
+    <div className="overlay fixed inset-0 z-[100] bg-black bg-opacity-80 flex items-center justify-center">
+      <div className="upload-container bg-white dark:bg-slate-900 text-black dark:text-white rounded-lg shadow-lg p-4 gap-2 flex flex-col max-w-lg">
         <input
           type="file"
           accept="image/*,video/*"
           onChange={handleFileChange}
-          className="border border-gray-300 p-2 rounded"
+          className="border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-black dark:text-white p-2 rounded"
         />
         {file && (
           <img
@@ -72,7 +72,7 @@ export default function UploadOverlay({ closeUpload, onPostCreated }) {
           placeholder="Write a caption..."
           maxLength={1000}
           rows={3}
-          className="border border-gray-300 p-2 mb-4 rounded"
+          className="border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 p-2 mb-4 rounded"
           required
         />
         <button
