@@ -1,6 +1,5 @@
 import pic from "../assets/pic.png";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import ChatWindow from "./ChatWindow";
 
 export default function ProfileTop({
@@ -25,7 +24,6 @@ export default function ProfileTop({
   const [coverLoading, setCoverLoading] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [minimizedChat, setMinimizedChat] = useState(false);
-  const navigate = useNavigate();
 
   const handleProfilePictureUpload = async () => {
     if (!selectedFile) {
@@ -164,6 +162,56 @@ export default function ProfileTop({
     }
   };
 
+  const unfriend = async () => {
+    const confirmed = window.confirm(`Remove ${name} from friends?`);
+
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/friends/all`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch friends");
+      }
+
+      const friendships = await response.json();
+
+      const friendship = friendships.find(
+        (friendship) =>
+          friendship.sender.id === userId || friendship.receiver.id === userId,
+      );
+
+      if (!friendship) {
+        throw new Error("Friendship not found");
+      }
+
+      const unfriendResponse = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/friends/unfriend/${friendship.id}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        },
+      );
+
+      if (!unfriendResponse.ok) {
+        throw new Error("Failed to unfriend user");
+      }
+
+      await fetchFriendshipStatus();
+    } catch (error) {
+      console.error("Error unfriending user:", error);
+    }
+  };
+
   return (
     <>
       <div
@@ -246,68 +294,11 @@ export default function ProfileTop({
         )}
 
         <div className="flex items-center justify-between absolute -bottom-[72px] left-[225px] right-0">
-          <span className="font-bold text-2xl text-gray-300">{name}</span>
+          <span className="font-bold text-2xl text-gray-900 dark:text-gray-300">
+            {name}
+          </span>
           <div className="flex items-center justify-between gap-2">
-            {isOwnProfile && (
-              <button className="rounded-md bg-blue-600 py-2 px-3 flex items-center justify-between gap-1">
-                <svg
-                  className="w-6 h-6"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                  <g
-                    id="SVGRepo_tracerCarrier"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  ></g>
-                  <g id="SVGRepo_iconCarrier">
-                    {" "}
-                    <g id="Edit / Add_Plus">
-                      {" "}
-                      <path
-                        id="Vector"
-                        d="M6 12H12M12 12H18M12 12V18M12 12V6"
-                        stroke="#ffffff"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      ></path>{" "}
-                    </g>{" "}
-                  </g>
-                </svg>
-                <span className="text-white">Add to story</span>
-              </button>
-            )}
-
-            {isOwnProfile ? (
-              <button className="rounded-md bg-gray-300 py-2 px-3 flex items-center justify-between gap-1">
-                <svg
-                  className="w-6 h-6"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                  <g
-                    id="SVGRepo_tracerCarrier"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  ></g>
-                  <g id="SVGRepo_iconCarrier">
-                    <path
-                      fill-rule="evenodd"
-                      clip-rule="evenodd"
-                      d="m3.99 16.854-1.314 3.504a.75.75 0 0 0 .966.965l3.503-1.314a3 3 0 0 0 1.068-.687L18.36 9.175s-.354-1.061-1.414-2.122c-1.06-1.06-2.122-1.414-2.122-1.414L4.677 15.786a3 3 0 0 0-.687 1.068zm12.249-12.63 1.383-1.383c.248-.248.579-.406.925-.348.487.08 1.232.322 1.934 1.025.703.703.945 1.447 1.025 1.934.058.346-.1.677-.348.925L19.774 7.76s-.353-1.06-1.414-2.12c-1.06-1.062-2.121-1.415-2.121-1.415z"
-                      fill="#000000"
-                    ></path>
-                  </g>
-                </svg>
-
-                <span className="text-black">Edit Profile</span>
-              </button>
-            ) : (
+            {!isOwnProfile && (
               <button
                 onClick={() => {
                   setShowChat(true);
@@ -323,7 +314,9 @@ export default function ProfileTop({
                 onClick={
                   friendshipStatus === "RECEIVED"
                     ? acceptFriendRequest
-                    : sendFriendRequest
+                    : friendshipStatus === "ACCEPTED"
+                      ? unfriend
+                      : sendFriendRequest
                 }
                 className="rounded-md bg-teal-600 py-2 px-3 text-white"
               >
@@ -336,30 +329,6 @@ export default function ProfileTop({
                       : "Add Friend"}
               </button>
             )}
-            <button className="rounded-md bg-gray-300 p-2">
-              <svg
-                className="w-6 h-6"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                <g
-                  id="SVGRepo_tracerCarrier"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                ></g>
-                <g id="SVGRepo_iconCarrier">
-                  {" "}
-                  <path
-                    fill-rule="evenodd"
-                    clip-rule="evenodd"
-                    d="M12 7C12.2652 7 12.5196 7.10536 12.7071 7.29289L19.7071 14.2929C20.0976 14.6834 20.0976 15.3166 19.7071 15.7071C19.3166 16.0976 18.6834 16.0976 18.2929 15.7071L12 9.41421L5.70711 15.7071C5.31658 16.0976 4.68342 16.0976 4.29289 15.7071C3.90237 15.3166 3.90237 14.6834 4.29289 14.2929L11.2929 7.29289C11.4804 7.10536 11.7348 7 12 7Z"
-                    fill="#000000"
-                  ></path>{" "}
-                </g>
-              </svg>
-            </button>
           </div>
         </div>
       </div>
@@ -386,10 +355,14 @@ export default function ProfileTop({
             <button onClick={() => setActiveTab("about")}>About</button>
           </li>
 
-          <li className="py-2 px-4 rounded-md hover:bg-gray-300 dark:hover:bg-slate-700">
-            <button onClick={() => navigate(`/users/${userId}/friends`)}>
-              Friends
-            </button>
+          <li
+            className={`py-2 px-4 rounded-md ${
+              activeTab === "friends"
+                ? "bg-gray-200 font-semibold text-gray-900"
+                : "hover:bg-gray-300 dark:hover:bg-slate-700"
+            }`}
+          >
+            <button onClick={() => setActiveTab("friends")}>Friends</button>
           </li>
 
           <li
@@ -416,41 +389,6 @@ export default function ProfileTop({
             <a href="#">More</a>
           </li>
         </ul>
-
-        <button className="rounded-md bg-gray-300 px-4 py-2">
-          <svg
-            className="w-6 h-6"
-            fill="#000000"
-            viewBox="0 0 32 32"
-            enable-background="new 0 0 32 32"
-            id="Glyph"
-            version="1.1"
-            xml:space="preserve"
-            xmlns="http://www.w3.org/2000/svg"
-            xmlns:xlink="http://www.w3.org/1999/xlink"
-          >
-            <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-            <g
-              id="SVGRepo_tracerCarrier"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            ></g>
-            <g id="SVGRepo_iconCarrier">
-              <path
-                d="M16,13c-1.654,0-3,1.346-3,3s1.346,3,3,3s3-1.346,3-3S17.654,13,16,13z"
-                id="XMLID_287_"
-              ></path>
-              <path
-                d="M6,13c-1.654,0-3,1.346-3,3s1.346,3,3,3s3-1.346,3-3S7.654,13,6,13z"
-                id="XMLID_289_"
-              ></path>
-              <path
-                d="M26,13c-1.654,0-3,1.346-3,3s1.346,3,3,3s3-1.346,3-3S27.654,13,26,13z"
-                id="XMLID_291_"
-              ></path>
-            </g>
-          </svg>
-        </button>
       </div>
       {showChat && !isOwnProfile && (
         <div className="fixed bottom-4 right-4 z-50 w-80 bg-white border shadow-xl rounded-xl">

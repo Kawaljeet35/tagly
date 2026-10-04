@@ -4,7 +4,6 @@ import Login from "./Login";
 import Home from "./Home";
 import Profile from "./Profile";
 import DiscoverPage from "./DiscoverPage";
-import Friends from "./Friends";
 import Users from "./Users";
 import Messages from "./Messages";
 
@@ -43,14 +42,6 @@ export default function App() {
             <Route
               path="/discover"
               element={<DiscoverPage handleLogout={handleLogout} />}
-            />
-            <Route
-              path="/friends"
-              element={<Friends handleLogout={handleLogout} />}
-            />
-            <Route
-              path="/users/:id/friends"
-              element={<Friends handleLogout={handleLogout} />}
             />
             <Route
               path="/messages/:id"

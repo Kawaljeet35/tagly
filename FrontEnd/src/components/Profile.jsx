@@ -1,9 +1,10 @@
 import Navbar from "./Navbar";
 import ProfileTop from "./ProfileTop";
 import Posts from "./Posts";
+import ChatWindow from "./ChatWindow";
 import ProfilePic from "../assets/pic.png";
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 export default function Profile({ handleLogout }) {
   const [user, setUser] = useState(null);
@@ -11,14 +12,28 @@ export default function Profile({ handleLogout }) {
   const [friendshipStatus, setFriendshipStatus] = useState("NONE");
   const [posts, setPosts] = useState([]);
   const [activeTab, setActiveTab] = useState("posts");
+  const [friends, setFriends] = useState([]);
+  const [requests, setRequests] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [myFriends, setMyFriends] = useState([]);
+  const [sentRequests, setSentRequests] = useState([]);
+  const [friendStatuses, setFriendStatuses] = useState({});
+  const [activeChat, setActiveChat] = useState(null);
+  const [minimizedChat, setMinimizedChat] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [photoComments, setPhotoComments] = useState([]);
   const [showPhotoComments, setShowPhotoComments] = useState(false);
   const [photoCommentText, setPhotoCommentText] = useState("");
+  const [hiddenPhotoReplies, setHiddenPhotoReplies] = useState(new Set());
+  const [photoReplyingTo, setPhotoReplyingTo] = useState(null);
+  const [photoReplyText, setPhotoReplyText] = useState("");
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [videoComments, setVideoComments] = useState([]);
   const [showVideoComments, setShowVideoComments] = useState(false);
   const [videoCommentText, setVideoCommentText] = useState("");
+  const [hiddenVideoReplies, setHiddenVideoReplies] = useState(new Set());
+  const [videoReplyingTo, setVideoReplyingTo] = useState(null);
+  const [videoReplyText, setVideoReplyText] = useState("");
   const [isNameEditOpen, setIsNameEditOpen] = useState(false);
   const [editName, setEditName] = useState("");
   const [nameUpdateLoading, setNameUpdateLoading] = useState(false);
@@ -30,6 +45,7 @@ export default function Profile({ handleLogout }) {
   const [locationUpdateLoading, setLocationUpdateLoading] = useState(false);
 
   const { id } = useParams();
+  const navigate = useNavigate();
 
   const fetchUser = async () => {
     try {
@@ -115,6 +131,256 @@ export default function Profile({ handleLogout }) {
       console.error("Error fetching profile posts:", error);
     }
   };
+
+  const fetchFriendRequests = async () => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/friends/requests`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        },
+      );
+
+      const data = await response.json();
+
+      setRequests(data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const fetchFriends = async () => {
+    if (!user?.id) return;
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/friends/all/${user.id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        },
+      );
+
+      const data = await response.json();
+
+      setFriends(data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const fetchMyFriends = async () => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/friends/all`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        },
+      );
+
+      const data = await response.json();
+
+      setMyFriends(data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const acceptRequest = async (requestId) => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/friends/accept/${requestId}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        const responseText = await response.text();
+
+        throw new Error(
+          `Failed to accept friend request: ${response.status} ${responseText}`,
+        );
+      }
+
+      await fetchFriendRequests();
+      await fetchFriends();
+      await fetchMyFriends();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const declineRequest = async (requestId) => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/friends/decline/${requestId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to decline friend request");
+      }
+
+      await fetchFriendRequests();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const unfriend = async (friendshipId) => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/friends/unfriend/${friendshipId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to unfriend user");
+      }
+
+      await fetchFriends();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const getFriendUser = (friend) => {
+    const profileOwnerId = user?.id;
+
+    return friend.sender.id === profileOwnerId
+      ? friend.receiver
+      : friend.sender;
+  };
+
+  const isMyFriend = (userId) => {
+    return myFriends.some((friendship) => {
+      const friendUser =
+        friendship.sender.id === currentUser?.id
+          ? friendship.receiver
+          : friendship.sender;
+
+      return friendUser.id === userId;
+    });
+  };
+
+  const fetchFriendshipStatuses = async () => {
+    if (!currentUser || friends.length === 0) return;
+
+    const statuses = {};
+
+    await Promise.all(
+      friends.map(async (friend) => {
+        const friendUser = getFriendUser(friend);
+
+        if (!friendUser || friendUser.id === currentUser.id) {
+          return;
+        }
+
+        try {
+          const response = await fetch(
+            `${import.meta.env.VITE_API_URL}/api/friends/status/${friendUser.id}`,
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            },
+          );
+
+          if (response.ok) {
+            const status = await response.text();
+
+            statuses[friendUser.id] = status;
+          }
+        } catch (error) {
+          console.error("Error fetching friendship status:", error);
+        }
+      }),
+    );
+
+    setFriendStatuses(statuses);
+  };
+
+  const sendFriendRequest = async (userId) => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/friends/request/${userId}`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        },
+      );
+
+      const responseText = await response.text();
+
+      console.log("Friend request status:", response.status);
+      console.log("Friend request response:", responseText);
+
+      if (!response.ok) {
+        alert(`Request failed: ${responseText || response.status}`);
+        return;
+      }
+
+      setSentRequests((prev) => [...prev, Number(userId)]);
+
+      setFriendStatuses((prev) => ({
+        ...prev,
+        [userId]: "PENDING",
+      }));
+
+      alert("Friend request sent");
+    } catch (error) {
+      console.error("Error sending friend request:", error);
+
+      alert("Something went wrong. Check the browser console.");
+    }
+  };
+
+  const isOtherUserProfile = user && currentUser && user.id !== currentUser.id;
+
+  const filteredFriends = friends
+    .filter((friend) => {
+      const friendUser = getFriendUser(friend);
+
+      if (friendUser.id === currentUser?.id) {
+        return false;
+      }
+
+      return (
+        friendUser.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        friendUser.name?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    })
+    .sort((a, b) => {
+      const userA = getFriendUser(a);
+      const userB = getFriendUser(b);
+
+      return (userA.name || userA.username || "").localeCompare(
+        userB.name || userB.username || "",
+        undefined,
+        { sensitivity: "base" },
+      );
+    });
 
   const handleNameUpdate = async () => {
     if (!editName.trim()) {
@@ -407,6 +673,92 @@ export default function Profile({ handleLogout }) {
     }
   };
 
+  const handlePhotoReply = async (commentId) => {
+    if (!photoReplyText.trim()) return;
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/posts/comments/${commentId}/reply`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify(photoReplyText),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to add reply");
+      }
+
+      setPhotoReplyText("");
+      setPhotoReplyingTo(null);
+
+      setSelectedPhoto((prev) => ({
+        ...prev,
+        commentsCount: prev.commentsCount + 1,
+      }));
+
+      await fetchPhotoComments();
+    } catch (error) {
+      console.error("Error adding photo reply:", error);
+    }
+  };
+
+  const handlePhotoCommentLike = async (commentId) => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/posts/comments/${commentId}/like`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to like comment");
+      }
+
+      setPhotoComments((prevComments) =>
+        prevComments.map((comment) => {
+          if (comment.id !== commentId) {
+            return comment;
+          }
+
+          const liked = !comment.likedByCurrentUser;
+
+          return {
+            ...comment,
+            likedByCurrentUser: liked,
+            likesCount: liked
+              ? comment.likesCount + 1
+              : Math.max(0, comment.likesCount - 1),
+          };
+        }),
+      );
+    } catch (error) {
+      console.error("Error liking photo comment:", error);
+    }
+  };
+
+  const togglePhotoReplies = (commentId) => {
+    setHiddenPhotoReplies((prev) => {
+      const updated = new Set(prev);
+
+      if (updated.has(commentId)) {
+        updated.delete(commentId);
+      } else {
+        updated.add(commentId);
+      }
+
+      return updated;
+    });
+  };
+
   const handleVideoComment = async () => {
     if (!videoCommentText.trim() || !selectedVideo) return;
 
@@ -448,6 +800,92 @@ export default function Profile({ handleLogout }) {
     );
   };
 
+  const handleVideoReply = async (commentId) => {
+    if (!videoReplyText.trim()) return;
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/posts/comments/${commentId}/reply`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify(videoReplyText),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to add reply");
+      }
+
+      setVideoReplyText("");
+      setVideoReplyingTo(null);
+
+      setSelectedVideo((prev) => ({
+        ...prev,
+        commentsCount: prev.commentsCount + 1,
+      }));
+
+      await fetchVideoComments();
+    } catch (error) {
+      console.error("Error adding video reply:", error);
+    }
+  };
+
+  const handleVideoCommentLike = async (commentId) => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/posts/comments/${commentId}/like`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to like comment");
+      }
+
+      setVideoComments((prevComments) =>
+        prevComments.map((comment) => {
+          if (comment.id !== commentId) {
+            return comment;
+          }
+
+          const liked = !comment.likedByCurrentUser;
+
+          return {
+            ...comment,
+            likedByCurrentUser: liked,
+            likesCount: liked
+              ? comment.likesCount + 1
+              : Math.max(0, comment.likesCount - 1),
+          };
+        }),
+      );
+    } catch (error) {
+      console.error("Error liking video comment:", error);
+    }
+  };
+
+  const toggleVideoReplies = (commentId) => {
+    setHiddenVideoReplies((prev) => {
+      const updated = new Set(prev);
+
+      if (updated.has(commentId)) {
+        updated.delete(commentId);
+      } else {
+        updated.add(commentId);
+      }
+
+      return updated;
+    });
+  };
+
   useEffect(() => {
     fetchUser();
     fetchCurrentUser();
@@ -459,6 +897,20 @@ export default function Profile({ handleLogout }) {
       fetchPosts();
     }
   }, [id, currentUser]);
+
+  useEffect(() => {
+    if (activeTab === "friends" && user?.id) {
+      fetchFriendRequests();
+      fetchFriends();
+      fetchMyFriends();
+    }
+  }, [activeTab, user?.id]);
+
+  useEffect(() => {
+    if (activeTab === "friends") {
+      fetchFriendshipStatuses();
+    }
+  }, [friends, currentUser, activeTab, user?.id]);
 
   const formatTimestamp = (timestamp) => {
     if (!timestamp) return "Unknown date";
@@ -853,7 +1305,303 @@ export default function Profile({ handleLogout }) {
             </div>
           </div>
         )}
+        {activeTab === "friends" && (
+          <>
+            {/* Page Header */}
+            <div className="pt-2 mb-8">
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-300">
+                {currentUser?.id === user?.id
+                  ? "Your Friends"
+                  : `${user?.name}'s Friends`}
+              </h1>
+
+              {currentUser?.id === user?.id && (
+                <p className="text-gray-500 dark:text-gray-400 mt-1">
+                  Manage your friend requests and connections
+                </p>
+              )}
+            </div>
+
+            {/* Summary Cards */}
+            {!isOtherUserProfile && (
+              <div className="grid grid-cols-1 gap-4 mb-8">
+                <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl p-5 shadow-sm">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Pending Requests
+                  </p>
+
+                  <p className="text-3xl font-bold text-teal-600 mt-1">
+                    {requests.length}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {!isOtherUserProfile && (
+              <>
+                {/* Friend Requests */}
+                <section className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl shadow-sm mb-8 overflow-hidden">
+                  <div className="px-6 py-4 border-b border-gray-200 dark:border-slate-700">
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-gray-300">
+                      Friend Requests
+                    </h2>
+
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                      People who want to connect with you
+                    </p>
+                  </div>
+
+                  <div className="p-6">
+                    {requests.length === 0 ? (
+                      <p className="text-gray-500 dark:text-gray-400 text-sm">
+                        You don't have any pending friend requests.
+                      </p>
+                    ) : (
+                      requests.map((request) => (
+                        <div
+                          key={request.id}
+                          className="flex items-center gap-4 py-4 border-b border-gray-100 dark:border-slate-700 last:border-b-0"
+                        >
+                          <img
+                            src={request.sender.profilePictureUrl || ProfilePic}
+                            alt="profile"
+                            className="w-14 h-14 rounded-full object-cover"
+                          />
+
+                          <div className="flex-1">
+                            <p className="font-semibold text-gray-900 dark:text-gray-300">
+                              {request.sender.name}
+                            </p>
+
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              @{request.sender.username}
+                            </p>
+                          </div>
+
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => acceptRequest(request.id)}
+                              className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg"
+                            >
+                              Accept
+                            </button>
+
+                            <button
+                              onClick={() => declineRequest(request.id)}
+                              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg"
+                            >
+                              Decline
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </section>
+              </>
+            )}
+
+            {/* Friends */}
+            <section className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200 dark:border-slate-700">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-gray-300">
+                  Friends ({filteredFriends.length})
+                </h2>
+
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  {currentUser?.id === user?.id
+                    ? "People you're friends with..."
+                    : `People ${user?.name?.trim().split(/\s+/)[0]} is friends with...`}
+                </p>
+
+                {/* Search Friends */}
+                <div className="mt-4">
+                  <input
+                    type="text"
+                    placeholder={
+                      currentUser?.id === user?.id
+                        ? "Search your friends by name or username..."
+                        : `Search ${user?.name?.trim().split(/\s+/)[0] || "their"}'s friends by name or username...`
+                    }
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
+                </div>
+              </div>
+
+              <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {friends.length === 0 ? (
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">
+                    You don't have any friends yet.
+                  </p>
+                ) : filteredFriends.length === 0 ? (
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">
+                    No friends found matching your search.
+                  </p>
+                ) : (
+                  filteredFriends.map((friend) => {
+                    const friendUser = getFriendUser(friend);
+
+                    return (
+                      <div
+                        key={friend.id}
+                        onClick={() => navigate(`/users/${friendUser.id}`)}
+                        className="border border-gray-200 dark:border-slate-700 rounded-xl p-5 hover:shadow-md transition-shadow cursor-pointer"
+                      >
+                        <div className="flex flex-col items-center text-center">
+                          <img
+                            src={friendUser.profilePictureUrl || ProfilePic}
+                            alt="profile"
+                            className="w-20 h-20 rounded-full object-cover mb-3"
+                          />
+
+                          <p className="font-semibold text-gray-900 dark:text-gray-300">
+                            {friendUser.name}
+                          </p>
+
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            @{friendUser.username}
+                          </p>
+
+                          <div className="flex gap-2 mt-4">
+                            {isOtherUserProfile ? (
+                              isMyFriend(friendUser.id) ? (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveChat(friendUser);
+                                    setMinimizedChat(false);
+                                  }}
+                                  className="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-lg text-sm"
+                                >
+                                  Message
+                                </button>
+                              ) : requests.some(
+                                  (request) =>
+                                    request.sender.id === friendUser.id,
+                                ) ? (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+
+                                    const request = requests.find(
+                                      (request) =>
+                                        request.sender.id === friendUser.id,
+                                    );
+
+                                    if (request) {
+                                      acceptRequest(request.id);
+                                    }
+                                  }}
+                                  className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg text-sm"
+                                >
+                                  Accept Request
+                                </button>
+                              ) : friendStatuses[friendUser.id] === "PENDING" ||
+                                sentRequests.includes(friendUser.id) ? (
+                                <button
+                                  disabled
+                                  className="bg-gray-400 text-white px-4 py-2 rounded-lg text-sm cursor-not-allowed"
+                                >
+                                  Request Sent
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    sendFriendRequest(friendUser.id);
+                                  }}
+                                  className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg text-sm"
+                                >
+                                  Add Friend
+                                </button>
+                              )
+                            ) : (
+                              <>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveChat(friendUser);
+                                    setMinimizedChat(false);
+                                  }}
+                                  className="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-lg text-sm"
+                                >
+                                  Message
+                                </button>
+
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+
+                                    const confirmed = window.confirm(
+                                      `Remove ${friendUser.name} from friends?`,
+                                    );
+
+                                    if (confirmed) {
+                                      unfriend(friend.id);
+                                    }
+                                  }}
+                                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm"
+                                >
+                                  Unfriend
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </section>
+          </>
+        )}
       </div>
+      {activeChat && (
+        <div className="fixed bottom-4 right-4 z-50 w-80 bg-white shadow-xl rounded-xl overflow-hidden">
+          <div className="flex items-center justify-between p-3 border-b bg-teal-600 rounded-t-xl">
+            <div
+              onClick={() => navigate(`/users/${activeChat.id}`)}
+              className="flex items-center gap-2 cursor-pointer"
+            >
+              <img
+                src={activeChat.profilePictureUrl || ProfilePic}
+                alt=""
+                className="w-8 h-8 rounded-full object-cover"
+              />
+
+              <h2 className="font-semibold text-white hover:underline">
+                {activeChat.name || activeChat.username}
+              </h2>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setMinimizedChat((prev) => !prev)}
+                className="text-zinc-100 text-l leading-none hover:text-cyan-200"
+              >
+                —
+              </button>
+
+              <button
+                onClick={() => setActiveChat(null)}
+                className="text-zinc-100 hover:text-red-300"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+
+          {!minimizedChat && (
+            <ChatWindow
+              userId={activeChat.id}
+              userName={activeChat.name || activeChat.username}
+            />
+          )}
+        </div>
+      )}
       {selectedPhoto && (
         <div
           className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-6"
@@ -948,38 +1696,169 @@ export default function Profile({ handleLogout }) {
                       No comments yet.
                     </p>
                   ) : (
-                    photoComments.map((comment) => (
-                      <div key={comment.id} className="flex gap-3">
-                        <img
-                          src={comment.user?.profilePictureUrl || ProfilePic}
-                          alt=""
-                          className="w-9 h-9 rounded-full object-cover flex-shrink-0"
-                        />
+                    photoComments.map((comment) => {
+                      if (
+                        comment.parentCommentId &&
+                        hiddenPhotoReplies.has(comment.parentCommentId)
+                      ) {
+                        return null;
+                      }
 
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-baseline gap-2">
-                            <p className="font-semibold text-sm text-gray-900 dark:text-gray-300">
-                              {comment.user?.name || comment.user?.username}
-                            </p>
+                      return (
+                        <div
+                          key={comment.id}
+                          className={`flex gap-3 ${
+                            comment.parentCommentId ? "ml-10" : ""
+                          }`}
+                        >
+                          <img
+                            src={comment.user?.profilePictureUrl || ProfilePic}
+                            alt=""
+                            className="w-9 h-9 rounded-full object-cover flex-shrink-0"
+                          />
 
-                            <span className="text-xs text-gray-500">
-                              {formatCommentTimestamp(comment.createdAt)}
-                            </span>
+                          <div className="flex-1 min-w-0 flex justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-baseline gap-2">
+                                <p className="font-semibold text-sm text-gray-900 dark:text-gray-300">
+                                  {comment.user?.name || comment.user?.username}
+                                </p>
+
+                                <span className="text-xs text-gray-500 dark:text-gray-400">
+                                  {formatCommentTimestamp(comment.createdAt)}
+                                </span>
+                              </div>
+
+                              <p className="text-sm text-gray-700 dark:text-gray-200 break-words mt-0.5">
+                                {comment.content}
+                              </p>
+
+                              <div className="flex items-center gap-3 mt-1">
+                                {!comment.parentCommentId && (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setPhotoReplyingTo(
+                                          photoReplyingTo === comment.id
+                                            ? null
+                                            : comment.id,
+                                        );
+                                        setPhotoReplyText("");
+                                      }}
+                                      className="text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white"
+                                    >
+                                      Reply
+                                    </button>
+
+                                    {photoComments.some(
+                                      (reply) =>
+                                        reply.parentCommentId === comment.id,
+                                    ) && (
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          togglePhotoReplies(comment.id)
+                                        }
+                                        className="text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white"
+                                      >
+                                        {hiddenPhotoReplies.has(comment.id)
+                                          ? `Show replies (${
+                                              photoComments.filter(
+                                                (reply) =>
+                                                  reply.parentCommentId ===
+                                                  comment.id,
+                                              ).length
+                                            })`
+                                          : "Hide replies"}
+                                      </button>
+                                    )}
+                                  </>
+                                )}
+                              </div>
+
+                              {photoReplyingTo === comment.id &&
+                                !comment.parentCommentId && (
+                                  <div className="mt-2 space-y-2">
+                                    <input
+                                      type="text"
+                                      value={photoReplyText}
+                                      onChange={(e) =>
+                                        setPhotoReplyText(e.target.value)
+                                      }
+                                      placeholder="Write a reply..."
+                                      className="w-full border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 rounded-full px-4 py-2 text-sm outline-none"
+                                    />
+
+                                    <div className="flex justify-end gap-2">
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          handlePhotoReply(comment.id)
+                                        }
+                                        className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-full text-sm"
+                                      >
+                                        Reply
+                                      </button>
+
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setPhotoReplyingTo(null);
+                                          setPhotoReplyText("");
+                                        }}
+                                        className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white px-3 py-2 text-sm"
+                                      >
+                                        Cancel
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
+                            </div>
+
+                            <div className="flex flex-col items-center pt-1">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handlePhotoCommentLike(comment.id)
+                                }
+                                className={`hover:scale-110 transition-transform ${
+                                  comment.likedByCurrentUser
+                                    ? "text-red-500"
+                                    : "text-gray-400 hover:text-red-400"
+                                }`}
+                                aria-label="Like comment"
+                              >
+                                <svg
+                                  className="w-5 h-5"
+                                  viewBox="0 0 24 24"
+                                  fill={
+                                    comment.likedByCurrentUser
+                                      ? "currentColor"
+                                      : "none"
+                                  }
+                                  xmlns="http://www.w3.org/2000/svg"
+                                >
+                                  <path
+                                    d="M20.8 8.7C20.8 5.7 18.4 3.5 15.5 3.5C13.8 3.5 12.3 4.3 11.4 5.6C10.5 4.3 9 3.5 7.3 3.5C4.4 3.5 2 5.7 2 8.7C2 12.4 5.2 15.1 11.4 20.1C11.6 20.3 11.9 20.3 12.1 20.1C18.3 15.1 20.8 12.4 20.8 8.7Z"
+                                    stroke="currentColor"
+                                    strokeWidth="1.8"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                </svg>
+                              </button>
+
+                              {comment.likesCount > 0 && (
+                                <span className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                                  {comment.likesCount}
+                                </span>
+                              )}
+                            </div>
                           </div>
-
-                          <p className="text-sm text-gray-700 dark:text-gray-200 break-words mt-0.5">
-                            {comment.content}
-                          </p>
-
-                          <button
-                            type="button"
-                            className="text-xs font-semibold text-gray-500 hover:text-gray-800 mt-1"
-                          >
-                            Reply
-                          </button>
                         </div>
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                 </div>
 
@@ -1097,38 +1976,169 @@ export default function Profile({ handleLogout }) {
                       No comments yet.
                     </p>
                   ) : (
-                    videoComments.map((comment) => (
-                      <div key={comment.id} className="flex gap-3">
-                        <img
-                          src={comment.user?.profilePictureUrl || ProfilePic}
-                          alt=""
-                          className="w-9 h-9 rounded-full object-cover flex-shrink-0"
-                        />
+                    videoComments.map((comment) => {
+                      if (
+                        comment.parentCommentId &&
+                        hiddenVideoReplies.has(comment.parentCommentId)
+                      ) {
+                        return null;
+                      }
 
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-baseline gap-2">
-                            <p className="font-semibold text-sm text-gray-900 dark:text-gray-300">
-                              {comment.user?.name || comment.user?.username}
-                            </p>
+                      return (
+                        <div
+                          key={comment.id}
+                          className={`flex gap-3 ${
+                            comment.parentCommentId ? "ml-10" : ""
+                          }`}
+                        >
+                          <img
+                            src={comment.user?.profilePictureUrl || ProfilePic}
+                            alt=""
+                            className="w-9 h-9 rounded-full object-cover flex-shrink-0"
+                          />
 
-                            <span className="text-xs text-gray-500">
-                              {formatCommentTimestamp(comment.createdAt)}
-                            </span>
+                          <div className="flex-1 min-w-0 flex justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-baseline gap-2">
+                                <p className="font-semibold text-sm text-gray-900 dark:text-gray-300">
+                                  {comment.user?.name || comment.user?.username}
+                                </p>
+
+                                <span className="text-xs text-gray-500 dark:text-gray-400">
+                                  {formatCommentTimestamp(comment.createdAt)}
+                                </span>
+                              </div>
+
+                              <p className="text-sm text-gray-700 dark:text-gray-200 break-words mt-0.5">
+                                {comment.content}
+                              </p>
+
+                              <div className="flex items-center gap-3 mt-1">
+                                {!comment.parentCommentId && (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setVideoReplyingTo(
+                                          videoReplyingTo === comment.id
+                                            ? null
+                                            : comment.id,
+                                        );
+                                        setVideoReplyText("");
+                                      }}
+                                      className="text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white"
+                                    >
+                                      Reply
+                                    </button>
+
+                                    {videoComments.some(
+                                      (reply) =>
+                                        reply.parentCommentId === comment.id,
+                                    ) && (
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          toggleVideoReplies(comment.id)
+                                        }
+                                        className="text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white"
+                                      >
+                                        {hiddenVideoReplies.has(comment.id)
+                                          ? `Show replies (${
+                                              videoComments.filter(
+                                                (reply) =>
+                                                  reply.parentCommentId ===
+                                                  comment.id,
+                                              ).length
+                                            })`
+                                          : "Hide replies"}
+                                      </button>
+                                    )}
+                                  </>
+                                )}
+                              </div>
+
+                              {videoReplyingTo === comment.id &&
+                                !comment.parentCommentId && (
+                                  <div className="mt-2 space-y-2">
+                                    <input
+                                      type="text"
+                                      value={videoReplyText}
+                                      onChange={(e) =>
+                                        setVideoReplyText(e.target.value)
+                                      }
+                                      placeholder="Write a reply..."
+                                      className="w-full border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 rounded-full px-4 py-2 text-sm outline-none"
+                                    />
+
+                                    <div className="flex justify-end gap-2">
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          handleVideoReply(comment.id)
+                                        }
+                                        className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-full text-sm"
+                                      >
+                                        Reply
+                                      </button>
+
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setVideoReplyingTo(null);
+                                          setVideoReplyText("");
+                                        }}
+                                        className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white px-3 py-2 text-sm"
+                                      >
+                                        Cancel
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
+                            </div>
+
+                            <div className="flex flex-col items-center pt-1">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleVideoCommentLike(comment.id)
+                                }
+                                className={`hover:scale-110 transition-transform ${
+                                  comment.likedByCurrentUser
+                                    ? "text-red-500"
+                                    : "text-gray-400 hover:text-red-400"
+                                }`}
+                                aria-label="Like comment"
+                              >
+                                <svg
+                                  className="w-5 h-5"
+                                  viewBox="0 0 24 24"
+                                  fill={
+                                    comment.likedByCurrentUser
+                                      ? "currentColor"
+                                      : "none"
+                                  }
+                                  xmlns="http://www.w3.org/2000/svg"
+                                >
+                                  <path
+                                    d="M20.8 8.7C20.8 5.7 18.4 3.5 15.5 3.5C13.8 3.5 12.3 4.3 11.4 5.6C10.5 4.3 9 3.5 7.3 3.5C4.4 3.5 2 5.7 2 8.7C2 12.4 5.2 15.1 11.4 20.1C11.6 20.3 11.9 20.3 12.1 20.1C18.3 15.1 20.8 12.4 20.8 8.7Z"
+                                    stroke="currentColor"
+                                    strokeWidth="1.8"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                </svg>
+                              </button>
+
+                              {comment.likesCount > 0 && (
+                                <span className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                                  {comment.likesCount}
+                                </span>
+                              )}
+                            </div>
                           </div>
-
-                          <p className="text-sm text-gray-700 dark:text-gray-200 break-words mt-0.5">
-                            {comment.content}
-                          </p>
-
-                          <button
-                            type="button"
-                            className="text-xs font-semibold text-gray-500 hover:text-gray-800 mt-1"
-                          >
-                            Reply
-                          </button>
                         </div>
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                 </div>
                 {/* COMMENT INPUT */}
