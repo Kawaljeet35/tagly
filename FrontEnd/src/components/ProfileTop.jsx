@@ -1,6 +1,50 @@
 import pic from "../assets/pic.png";
 import { useState } from "react";
 import ChatWindow from "./ChatWindow";
+import Cropper from "react-easy-crop";
+
+const getCroppedImg = (imageSrc, crop) => {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+
+    image.onload = () => {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+
+      canvas.width = crop.width;
+      canvas.height = crop.height;
+
+      ctx.drawImage(
+        image,
+        crop.x,
+        crop.y,
+        crop.width,
+        crop.height,
+        0,
+        0,
+        crop.width,
+        crop.height,
+      );
+
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          reject(new Error("Could not create cropped image"));
+          return;
+        }
+
+        resolve(blob);
+      }, "image/jpeg");
+    };
+
+    image.onerror = () => {
+      reject(new Error("Could not load image"));
+    };
+
+    image.src = imageSrc;
+  });
+};
+
+const MAX_FILE_SIZE = 50 * 1024 * 1024;
 
 export default function ProfileTop({
   name,
@@ -18,10 +62,16 @@ export default function ProfileTop({
   const [selectedFile, setSelectedFile] = useState(null);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
   const [isCoverPopupVisible, setCoverPopupVisible] = useState(false);
   const [selectedCoverFile, setSelectedCoverFile] = useState(null);
   const [coverMessage, setCoverMessage] = useState("");
   const [coverLoading, setCoverLoading] = useState(false);
+  const [coverCrop, setCoverCrop] = useState({ x: 0, y: 0 });
+  const [coverZoom, setCoverZoom] = useState(1);
+  const [coverCroppedAreaPixels, setCoverCroppedAreaPixels] = useState(null);
   const [showChat, setShowChat] = useState(false);
   const [minimizedChat, setMinimizedChat] = useState(false);
 
@@ -31,11 +81,27 @@ export default function ProfileTop({
       return;
     }
 
-    setLoading(true);
-    const formData = new FormData();
+    if (!croppedAreaPixels) {
+      alert("Please adjust the crop");
+      return;
+    }
 
-    formData.append("file", selectedFile);
+    setLoading(true);
+
     try {
+      const imageUrl = URL.createObjectURL(selectedFile);
+
+      const croppedBlob = await getCroppedImg(imageUrl, croppedAreaPixels);
+
+      URL.revokeObjectURL(imageUrl);
+
+      const croppedFile = new File([croppedBlob], selectedFile.name, {
+        type: "image/jpeg",
+      });
+
+      const formData = new FormData();
+      formData.append("file", croppedFile);
+
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/api/users/profile-picture`,
         {
@@ -46,6 +112,7 @@ export default function ProfileTop({
           body: formData,
         },
       );
+
       if (response.ok) {
         await fetchUser();
         setMessage("Profile picture uploaded");
@@ -53,12 +120,20 @@ export default function ProfileTop({
         setTimeout(() => {
           setPopupVisible(false);
           setSelectedFile(null);
+          setCrop({ x: 0, y: 0 });
+          setZoom(1);
+          setCroppedAreaPixels(null);
           setMessage("");
           setLoading(false);
         }, 1500);
+      } else {
+        setMessage("Failed to upload profile picture");
+        setLoading(false);
       }
     } catch (error) {
       console.error(error);
+      setMessage("Something went wrong");
+      setLoading(false);
     }
   };
 
@@ -68,12 +143,27 @@ export default function ProfileTop({
       return;
     }
 
+    if (!coverCroppedAreaPixels) {
+      alert("Please adjust the crop");
+      return;
+    }
+
     setCoverLoading(true);
 
-    const formData = new FormData();
-    formData.append("file", selectedCoverFile);
-
     try {
+      const imageUrl = URL.createObjectURL(selectedCoverFile);
+
+      const croppedBlob = await getCroppedImg(imageUrl, coverCroppedAreaPixels);
+
+      URL.revokeObjectURL(imageUrl);
+
+      const croppedFile = new File([croppedBlob], selectedCoverFile.name, {
+        type: "image/jpeg",
+      });
+
+      const formData = new FormData();
+      formData.append("file", croppedFile);
+
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/api/users/cover-photo`,
         {
@@ -92,6 +182,9 @@ export default function ProfileTop({
         setTimeout(() => {
           setCoverPopupVisible(false);
           setSelectedCoverFile(null);
+          setCoverCrop({ x: 0, y: 0 });
+          setCoverZoom(1);
+          setCoverCroppedAreaPixels(null);
           setCoverMessage("");
           setCoverLoading(false);
         }, 1500);
@@ -425,84 +518,201 @@ export default function ProfileTop({
       )}
       {isPopupVisible && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-4 rounded-lg">
-            <p>Upload Profile Picture</p>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setSelectedFile(e.target.files[0])}
-            />
-            {selectedFile && (
-              <img
-                src={URL.createObjectURL(selectedFile)}
-                alt="preview"
-                className="w-32 h-32 object-cover rounded-full mt-2"
+          <div className="bg-white p-4 rounded-lg w-[360px]">
+            <p className="font-semibold text-lg">Upload Profile Picture</p>
+
+            {!selectedFile ? (
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files[0];
+
+                  if (!file) return;
+
+                  if (file.size > MAX_FILE_SIZE) {
+                    alert("File size must be 50 MB or less.");
+                    e.target.value = "";
+                    setSelectedFile(null);
+                    return;
+                  }
+
+                  setSelectedFile(file);
+                  setCrop({ x: 0, y: 0 });
+                  setZoom(1);
+                  setCroppedAreaPixels(null);
+                }}
+                className="mt-3"
               />
+            ) : (
+              <>
+                <div className="relative w-full h-[320px] mt-3 bg-black">
+                  <Cropper
+                    image={URL.createObjectURL(selectedFile)}
+                    crop={crop}
+                    zoom={zoom}
+                    aspect={1}
+                    cropShape="rect"
+                    showGrid={true}
+                    onCropChange={setCrop}
+                    onZoomChange={setZoom}
+                    onCropComplete={(_, croppedAreaPixels) =>
+                      setCroppedAreaPixels(croppedAreaPixels)
+                    }
+                  />
+                </div>
+
+                <div className="mt-3">
+                  <label className="text-sm text-gray-600">Zoom</label>
+
+                  <input
+                    type="range"
+                    min={1}
+                    max={3}
+                    step={0.1}
+                    value={zoom}
+                    onChange={(e) => setZoom(Number(e.target.value))}
+                    className="w-full"
+                  />
+                </div>
+              </>
             )}
+
             {message && <p className="text-green-600 mt-2">{message}</p>}
-            <button
-              onClick={handleProfilePictureUpload}
-              disabled={loading}
-              className={`mt-2 px-4 py-2 rounded ${
-                loading ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"
-              } text-white`}
-            >
-              {loading ? "Uploading..." : "Upload"}
-            </button>
-            <button
-              onClick={() => !loading && setPopupVisible(false)}
-              disabled={loading}
-              className={`mt-2 px-4 py-2 rounded ${
-                loading ? "bg-gray-300" : "bg-red-600 hover:bg-red-700"
-              } text-white`}
-            >
-              Close
-            </button>
+
+            <div className="flex gap-2 mt-3">
+              <button
+                onClick={handleProfilePictureUpload}
+                disabled={loading || !selectedFile}
+                className={`px-4 py-2 rounded ${
+                  loading || !selectedFile
+                    ? "bg-gray-400"
+                    : "bg-blue-600 hover:bg-blue-700"
+                } text-white`}
+              >
+                {loading ? "Uploading..." : "Upload"}
+              </button>
+
+              <button
+                onClick={() => {
+                  if (loading) return;
+
+                  setPopupVisible(false);
+                  setSelectedFile(null);
+                  setCrop({ x: 0, y: 0 });
+                  setZoom(1);
+                  setCroppedAreaPixels(null);
+                  setMessage("");
+                }}
+                disabled={loading}
+                className={`px-4 py-2 rounded ${
+                  loading ? "bg-gray-300" : "bg-red-600 hover:bg-red-700"
+                } text-white`}
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
       {isCoverPopupVisible && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-4 rounded-lg">
-            <p>Upload Cover Photo</p>
+          <div className="bg-white p-4 rounded-lg w-[440px]">
+            <p className="font-semibold text-lg">Upload Cover Photo</p>
 
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setSelectedCoverFile(e.target.files[0])}
-            />
+            {!selectedCoverFile ? (
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files[0];
 
-            {selectedCoverFile && (
-              <img
-                src={URL.createObjectURL(selectedCoverFile)}
-                alt="cover preview"
-                className="w-80 h-40 object-cover rounded-lg mt-2"
+                  if (!file) return;
+
+                  if (file.size > MAX_FILE_SIZE) {
+                    alert("File size must be 50 MB or less.");
+                    e.target.value = "";
+                    setSelectedCoverFile(null);
+                    return;
+                  }
+
+                  setSelectedCoverFile(file);
+                  setCoverCrop({ x: 0, y: 0 });
+                  setCoverZoom(1);
+                  setCoverCroppedAreaPixels(null);
+                }}
+                className="mt-3"
               />
+            ) : (
+              <>
+                <div className="relative w-full h-[250px] mt-3 bg-black">
+                  <Cropper
+                    image={URL.createObjectURL(selectedCoverFile)}
+                    crop={coverCrop}
+                    zoom={coverZoom}
+                    aspect={16 / 9}
+                    cropShape="rect"
+                    showGrid={true}
+                    onCropChange={setCoverCrop}
+                    onZoomChange={setCoverZoom}
+                    onCropComplete={(_, croppedAreaPixels) =>
+                      setCoverCroppedAreaPixels(croppedAreaPixels)
+                    }
+                  />
+                </div>
+
+                <div className="mt-3">
+                  <label className="text-sm text-gray-600">Zoom</label>
+
+                  <input
+                    type="range"
+                    min={1}
+                    max={3}
+                    step={0.1}
+                    value={coverZoom}
+                    onChange={(e) => setCoverZoom(Number(e.target.value))}
+                    className="w-full"
+                  />
+                </div>
+              </>
             )}
 
             {coverMessage && (
               <p className="text-green-600 mt-2">{coverMessage}</p>
             )}
 
-            <button
-              onClick={handleCoverPhotoUpload}
-              disabled={coverLoading}
-              className={`mt-2 px-4 py-2 rounded ${
-                coverLoading ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"
-              } text-white`}
-            >
-              {coverLoading ? "Uploading..." : "Upload"}
-            </button>
+            <div className="flex gap-2 mt-3">
+              <button
+                onClick={handleCoverPhotoUpload}
+                disabled={coverLoading || !selectedCoverFile}
+                className={`px-4 py-2 rounded ${
+                  coverLoading || !selectedCoverFile
+                    ? "bg-gray-400"
+                    : "bg-blue-600 hover:bg-blue-700"
+                } text-white`}
+              >
+                {coverLoading ? "Uploading..." : "Upload"}
+              </button>
 
-            <button
-              onClick={() => !coverLoading && setCoverPopupVisible(false)}
-              disabled={coverLoading}
-              className={`mt-2 ml-2 px-4 py-2 rounded ${
-                coverLoading ? "bg-gray-300" : "bg-red-600 hover:bg-red-700"
-              } text-white`}
-            >
-              Close
-            </button>
+              <button
+                onClick={() => {
+                  if (coverLoading) return;
+
+                  setCoverPopupVisible(false);
+                  setSelectedCoverFile(null);
+                  setCoverCrop({ x: 0, y: 0 });
+                  setCoverZoom(1);
+                  setCoverCroppedAreaPixels(null);
+                  setCoverMessage("");
+                }}
+                disabled={coverLoading}
+                className={`px-4 py-2 rounded ${
+                  coverLoading ? "bg-gray-300" : "bg-red-600 hover:bg-red-700"
+                } text-white`}
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

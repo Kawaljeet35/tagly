@@ -10,6 +10,7 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import com.tagly.app.entity.User;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 import java.util.Optional;
@@ -20,15 +21,17 @@ public class UserService {
     private final UserRepository userRepository;
     private final S3Client s3Client;
     private final MinioProperties minioProperties;
+    private final PasswordEncoder passwordEncoder;
 
     public UserService(
             UserRepository userRepository,
             S3Client s3Client,
-            MinioProperties minioProperties
+            MinioProperties minioProperties, PasswordEncoder passwordEncoder
     ) {
         this.userRepository = userRepository;
         this.s3Client = s3Client;
         this.minioProperties = minioProperties;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public UserResponse getCurrentUser(String username) {
@@ -68,6 +71,40 @@ public class UserService {
         ourUser.setName(request.getName());
         ourUser.setBio(request.getBio());
         ourUser.setLocation(request.getLocation());
+
+        userRepository.save(ourUser);
+    }
+
+    public void changePassword(
+            String username,
+            String currentPassword,
+            String newPassword
+    ) {
+        Optional<User> user = userRepository.findByUsername(username);
+
+        if (user.isEmpty()) {
+            throw new IllegalArgumentException("User not found");
+        }
+
+        User ourUser = user.get();
+
+        if (!passwordEncoder.matches(
+                currentPassword,
+                ourUser.getHashedPassword()
+        )) {
+            throw new IllegalArgumentException("Current password is incorrect");
+        }
+
+        if (passwordEncoder.matches(
+                newPassword,
+                ourUser.getHashedPassword()
+        )) {
+            throw new IllegalArgumentException(
+                    "New password must be different from your current password"
+            );
+        }
+
+        ourUser.setHashedPassword(passwordEncoder.encode(newPassword));
 
         userRepository.save(ourUser);
     }

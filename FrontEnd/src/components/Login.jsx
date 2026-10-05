@@ -1,6 +1,7 @@
 import { useState } from "react";
 import logo from "../assets/mainLogoTagly.svg";
 import Register from "./Register";
+import { useNavigate } from "react-router-dom";
 
 export default function Login({ onLoginSuccess }) {
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
@@ -11,6 +12,7 @@ export default function Login({ onLoginSuccess }) {
   const [resetPasswordError, setResetPasswordError] = useState("");
   const [isPasswordReset, setIsPasswordReset] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -36,6 +38,7 @@ export default function Login({ onLoginSuccess }) {
       if (response.ok) {
         localStorage.setItem("token", data.token);
         localStorage.setItem("username", username);
+        navigate("/", { replace: true });
         onLoginSuccess();
       } else {
         setErrorMessage(data.message || "Login failed");

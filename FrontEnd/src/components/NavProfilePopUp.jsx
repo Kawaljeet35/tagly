@@ -3,13 +3,14 @@ import helpIcon from "../assets/helpIcon.png";
 import displayIcon from "../assets/displayIcon.png";
 import feedbackIcon from "../assets/feedbackIcon.png";
 import logoutIcon from "../assets/logoutIcon.png";
+import { useNavigate } from "react-router-dom";
 
 export default function NavProfilePopUp({
   handleLogout,
   onGiveFeedback,
   onDisplaySettings,
 }) {
-  // Defining common classes to keep code DRY
+  const navigate = useNavigate();
   const divClass =
     "flex justify-start items-center space-x-2 p-2 hover:bg-stone-100 dark:hover:bg-slate-800 rounded-lg cursor-pointer";
   const div2Class = "p-2 rounded-full bg-slate-200";
@@ -22,23 +23,35 @@ export default function NavProfilePopUp({
         Account
       </span>
 
-      <div className={divClass}>
+      <div
+        className={divClass}
+        onClick={() => {
+          navigate("/account-settings");
+        }}
+      >
         <div className={div2Class}>
           <img
             src={settingIcon}
-            alt="Settings & Privacy Icon"
+            alt="Account Settings Icon"
             className={imgClass}
           />
         </div>
-        <span className={spanClass}>Settings & Privacy</span>
+
+        <span className={spanClass}>Account Settings</span>
       </div>
 
-      <div className={divClass}>
+      <div
+        className={divClass}
+        onClick={() => {
+          navigate("/faq");
+        }}
+      >
         <div className={div2Class}>
-          <img src={helpIcon} alt="Help & Support Icon" className={imgClass} />
+          <img src={helpIcon} alt="FAQ Icon" className={imgClass} />
         </div>
-        <span className={spanClass}>Help & Support</span>
+        <span className={spanClass}>FAQ</span>
       </div>
+
       <div className={divClass} onClick={onDisplaySettings}>
         <div className={div2Class}>
           <img

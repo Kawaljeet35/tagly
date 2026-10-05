@@ -1,5 +1,6 @@
 package com.tagly.app.controller;
 
+import com.tagly.app.dto.ChangePasswordRequest;
 import com.tagly.app.dto.UpdateProfileRequest;
 import com.tagly.app.dto.UserResponse;
 import com.tagly.app.service.UserService;
@@ -73,6 +74,29 @@ public class UserController {
         userService.updateProfile(username, request);
 
         return ResponseEntity.ok("Profile updated");
+    }
+
+    @PutMapping("/change-password")
+    public ResponseEntity<String> changePassword(
+            @RequestBody ChangePasswordRequest request
+    ) {
+        Authentication auth =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        String username = auth.getName();
+
+        try {
+            userService.changePassword(
+                    username,
+                    request.getCurrentPassword(),
+                    request.getNewPassword()
+            );
+
+            return ResponseEntity.ok("Password changed successfully");
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @GetMapping

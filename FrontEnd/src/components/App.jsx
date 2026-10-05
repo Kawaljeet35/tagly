@@ -6,6 +6,8 @@ import Profile from "./Profile";
 import DiscoverPage from "./DiscoverPage";
 import Users from "./Users";
 import Messages from "./Messages";
+import AccountSettings from "./AccountSettings";
+import FAQ from "./FAQ";
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -46,6 +48,11 @@ export default function App() {
             <Route
               path="/messages/:id"
               element={<Messages handleLogout={handleLogout} />}
+            />
+            <Route path="/faq" element={<FAQ handleLogout={handleLogout} />} />
+            <Route
+              path="/account-settings"
+              element={<AccountSettings handleLogout={handleLogout} />}
             />
             <Route path="*" element={<Home handleLogout={handleLogout} />} />
             <Route

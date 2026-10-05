@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import Navbar from "./Navbar";
 import CreatePost from "./CreatePost";
-import AddStory from "./AddStory";
 import Posts from "./Posts";
 import UploadOverlay from "./UploadOverlay";
 
@@ -85,13 +84,13 @@ export default function Home({ handleLogout }) {
       />
 
       <div className="flow-root min-h-screen bg-stone-100 dark:bg-slate-800">
-        <AddStory />
-
-        <CreatePost
-          handleUploadClick={handleUploadClick}
-          onPostCreated={fetchPosts}
-          profilePictureUrl={user?.profilePictureUrl}
-        />
+        <div className="pt-[58px]">
+          <CreatePost
+            handleUploadClick={handleUploadClick}
+            onPostCreated={fetchPosts}
+            profilePictureUrl={user?.profilePictureUrl}
+          />
+        </div>
 
         {isUploadVisible && (
           <UploadOverlay closeUpload={closeUpload} onPostCreated={fetchPosts} />

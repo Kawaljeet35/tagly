@@ -1,11 +1,25 @@
 import { useState } from "react";
+const MAX_FILE_SIZE = 50 * 1024 * 1024;
 
 export default function UploadOverlay({ closeUpload, onPostCreated }) {
   const [file, setFile] = useState(null);
   const [caption, setCaption] = useState("");
 
   const handleFileChange = (event) => {
-    setFile(event.target.files[0]);
+    const selectedFile = event.target.files[0];
+
+    if (!selectedFile) {
+      return;
+    }
+
+    if (selectedFile.size > MAX_FILE_SIZE) {
+      alert("File size must be 50 MB or less.");
+      event.target.value = "";
+      setFile(null);
+      return;
+    }
+
+    setFile(selectedFile);
   };
 
   const handleCaptionChange = (event) => {
