@@ -75,6 +75,10 @@ public class Comment {
         this.post = post;
     }
 
+    public Long getPostId() {
+        return post != null ? post.getId() : null;
+    }
+
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }

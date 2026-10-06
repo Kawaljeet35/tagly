@@ -59,6 +59,7 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
       id: `like-${like.id}`,
       type: "like",
       user: like.user,
+      postId: like.postId,
       createdAt: like.createdAt,
     })),
 
@@ -66,6 +67,7 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
       id: `comment-${comment.id}`,
       type: "comment",
       user: comment.user,
+      postId: comment.postId,
       createdAt: comment.createdAt,
     })),
   ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -620,7 +622,23 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
               allNotifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className="p-3 border-b border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800"
+                  onClick={() => {
+                    if (
+                      (notification.type === "like" ||
+                        notification.type === "comment") &&
+                      notification.postId
+                    ) {
+                      setShowNotifications(false);
+                      navigate(`/profile?post=${notification.postId}`);
+                    }
+                  }}
+                  className={`p-3 border-b border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 ${
+                    (notification.type === "like" ||
+                      notification.type === "comment") &&
+                    notification.postId
+                      ? "cursor-pointer"
+                      : ""
+                  }`}
                 >
                   <p className="text-sm text-black dark:text-gray-200">
                     <span className="font-semibold">

@@ -4,7 +4,7 @@ import Posts from "./Posts";
 import ChatWindow from "./ChatWindow";
 import ProfilePic from "../assets/pic.png";
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 export default function Profile({ handleLogout }) {
   const [user, setUser] = useState(null);
@@ -45,6 +45,8 @@ export default function Profile({ handleLogout }) {
   const [locationUpdateLoading, setLocationUpdateLoading] = useState(false);
 
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const postIdFromUrl = searchParams.get("post");
   const navigate = useNavigate();
 
   const fetchUser = async () => {
@@ -899,6 +901,25 @@ export default function Profile({ handleLogout }) {
   }, [id, currentUser]);
 
   useEffect(() => {
+    if (!postIdFromUrl || posts.length === 0) {
+      return;
+    }
+
+    setActiveTab("posts");
+
+    const postElement = document.getElementById(`post-${postIdFromUrl}`);
+
+    if (postElement) {
+      setTimeout(() => {
+        postElement.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }, 100);
+    }
+  }, [postIdFromUrl, posts]);
+
+  useEffect(() => {
     if (activeTab === "friends" && user?.id) {
       fetchFriendRequests();
       fetchFriends();
@@ -1007,24 +1028,25 @@ export default function Profile({ handleLogout }) {
         {activeTab === "posts" && (
           <>
             {posts.map((post) => (
-              <Posts
-                key={post.id}
-                id={post.id}
-                name={post.name}
-                likedByCurrentUser={post.likedByCurrentUser}
-                content={post.content}
-                createdAt={formatTimestamp(post.createdAt)}
-                mediaUrl={post.mediaUrl}
-                mediaType={post.mediaType}
-                likesCount={post.likesCount}
-                commentsCount={post.commentsCount}
-                commentedByCurrentUser={post.commentedByCurrentUser}
-                sharesCount={post.sharesCount}
-                profilePictureUrl={post.profilePictureUrl}
-                username={post.username}
-                currentUsername={currentUser?.username}
-                onDelete={fetchPosts}
-              />
+              <div key={post.id} id={`post-${post.id}`}>
+                <Posts
+                  id={post.id}
+                  name={post.name}
+                  likedByCurrentUser={post.likedByCurrentUser}
+                  content={post.content}
+                  createdAt={formatTimestamp(post.createdAt)}
+                  mediaUrl={post.mediaUrl}
+                  mediaType={post.mediaType}
+                  likesCount={post.likesCount}
+                  commentsCount={post.commentsCount}
+                  commentedByCurrentUser={post.commentedByCurrentUser}
+                  sharesCount={post.sharesCount}
+                  profilePictureUrl={post.profilePictureUrl}
+                  username={post.username}
+                  currentUsername={currentUser?.username}
+                  onDelete={fetchPosts}
+                />
+              </div>
             ))}
           </>
         )}
