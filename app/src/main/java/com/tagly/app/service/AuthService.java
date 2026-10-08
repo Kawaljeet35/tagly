@@ -55,6 +55,10 @@ public class AuthService {
             throw new IllegalArgumentException("Invalid password");
         }
 
+        if ("DEACTIVATED".equals(user.getAccountStatus())) {
+            throw new IllegalArgumentException("Account is deactivated");
+        }
+
         String token = jwtUtil.generateToken(user.getUsername());
 
         return new AuthResponse(token);

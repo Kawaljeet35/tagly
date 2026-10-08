@@ -204,4 +204,14 @@ public class UserService {
                         keyword
                 );
     }
+
+    public void deactivateAccount(String username) {
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setAccountStatus("DEACTIVATED");
+
+        userRepository.save(user);
+    }
 }

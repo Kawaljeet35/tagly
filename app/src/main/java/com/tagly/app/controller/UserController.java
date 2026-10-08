@@ -76,6 +76,19 @@ public class UserController {
         return ResponseEntity.ok("Profile updated");
     }
 
+    @PutMapping("/deactivate")
+    public ResponseEntity<String> deactivateAccount() {
+
+        Authentication auth =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        String username = auth.getName();
+
+        userService.deactivateAccount(username);
+
+        return ResponseEntity.ok("Account deactivated");
+    }
+
     @PutMapping("/change-password")
     public ResponseEntity<String> changePassword(
             @RequestBody ChangePasswordRequest request

@@ -46,6 +46,8 @@ public class User {
 
     private String coverPhotoUrl;
 
+    private String accountStatus = "ACTIVE";
+
     @JsonIgnore
     @OneToMany(mappedBy = "sender")
     private List<FriendRequest> sentRequests;
@@ -140,6 +142,14 @@ public class User {
 
     public void setCoverPhotoUrl(String coverPhotoUrl) {
         this.coverPhotoUrl = coverPhotoUrl;
+    }
+
+    public String getAccountStatus() {
+        return accountStatus;
+    }
+
+    public void setAccountStatus(String accountStatus) {
+        this.accountStatus = accountStatus;
     }
 
     public List<FriendRequest> getSentRequests() {
