@@ -224,6 +224,16 @@ public class PostController {
         );
     }
 
+    @GetMapping("/{postId}/likes")
+    public ResponseEntity<List<Like>> getLikes(
+            @PathVariable Long postId
+    ) {
+
+        return ResponseEntity.ok(
+                postService.getLikesByPost(postId)
+        );
+    }
+
     @PutMapping("/{postId}")
     public ResponseEntity<?> editPost(
             @PathVariable Long postId,

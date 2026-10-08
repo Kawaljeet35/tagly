@@ -13,7 +13,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Optional;
-import java.util.Collections;
 
 import com.tagly.app.entity.User;
 
@@ -57,6 +56,8 @@ public class JwtFilter extends OncePerRequestFilter {
 
             } catch (Exception e) {
                 System.out.println("JWT ERROR: " + e.getMessage());
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                return;
             }
         }
         filterChain.doFilter(request, response);

@@ -27,6 +27,63 @@ export default function App() {
     setIsLoggedIn(!!token);
   }, []);
 
+  useEffect(() => {
+    if (!isLoggedIn) {
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      return;
+    }
+
+    try {
+      const payload = JSON.parse(
+        atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")),
+      );
+
+      const expiresAt = payload.exp * 1000;
+      const timeUntilExpiry = expiresAt - Date.now();
+
+      if (timeUntilExpiry <= 0) {
+        handleLogout();
+        return;
+      }
+
+      const timeoutId = setTimeout(() => {
+        handleLogout();
+      }, timeUntilExpiry);
+
+      return () => clearTimeout(timeoutId);
+    } catch (error) {
+      console.error("Invalid JWT:", error);
+      handleLogout();
+    }
+  }, [isLoggedIn]);
+
+  useEffect(() => {
+    if (!isLoggedIn) {
+      return;
+    }
+
+    const originalFetch = window.fetch;
+
+    window.fetch = async (...args) => {
+      const response = await originalFetch(...args);
+
+      if (response.status === 401) {
+        handleLogout();
+      }
+
+      return response;
+    };
+
+    return () => {
+      window.fetch = originalFetch;
+    };
+  }, [isLoggedIn]);
+
   return (
     <Router>
       <Routes>

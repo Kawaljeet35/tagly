@@ -24,6 +24,8 @@ export default function Posts({
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState([]);
+  const [likes, setLikes] = useState([]);
+  const [showLikes, setShowLikes] = useState(false);
   const [hiddenReplies, setHiddenReplies] = useState(new Set());
   const [replyingTo, setReplyingTo] = useState(null);
   const [replyText, setReplyText] = useState("");
@@ -260,6 +262,28 @@ export default function Posts({
     }
   };
 
+  const fetchLikes = async () => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/posts/${id}/likes`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch likes");
+      }
+
+      const data = await response.json();
+      setLikes(data);
+    } catch (error) {
+      console.error("Error fetching likes:", error);
+    }
+  };
+
   const toggleReplies = (commentId) => {
     setHiddenReplies((prev) => {
       const updated = new Set(prev);
@@ -458,7 +482,16 @@ export default function Posts({
       )}
 
       <div className="flex py-[10px] px-4 justify-between text-black dark:text-gray-200">
-        <div className="flex">
+        <div
+          onClick={() => {
+            setShowLikes(!showLikes);
+
+            if (!showLikes) {
+              fetchLikes();
+            }
+          }}
+          className="flex items-center cursor-pointer select-none"
+        >
           <svg
             className="h-6 w-6"
             version="1.2"
@@ -833,6 +866,43 @@ export default function Posts({
               );
             })}
           </div>
+        </div>
+      )}
+      {showLikes && (
+        <div className="px-4 py-3 border-t border-gray-200 dark:border-slate-700">
+          {likes.length === 0 ? (
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Be the first to Like this post
+            </p>
+          ) : (
+            <>
+              <p className="font-semibold text-sm text-gray-900 dark:text-gray-200 mb-3">
+                Liked by
+              </p>
+
+              <div className="space-y-3">
+                {likes.map((like) => (
+                  <div key={like.id} className="flex items-center gap-3">
+                    <img
+                      src={like.user?.profilePictureUrl || ProfilePic}
+                      alt=""
+                      className="w-9 h-9 rounded-full object-cover flex-shrink-0"
+                    />
+
+                    <div className="min-w-0">
+                      <p className="font-semibold text-sm text-gray-900 dark:text-gray-200">
+                        {like.user?.name || like.user?.username}
+                      </p>
+
+                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                        @{like.user?.username}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>

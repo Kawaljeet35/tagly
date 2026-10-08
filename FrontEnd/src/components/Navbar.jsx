@@ -630,12 +630,23 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
                     ) {
                       setShowNotifications(false);
                       navigate(`/profile?post=${notification.postId}`);
+                      return;
+                    }
+
+                    if (
+                      notification.type === "friendRequest" &&
+                      notification.user?.id
+                    ) {
+                      setShowNotifications(false);
+                      navigate(`/users/${notification.user.id}`);
                     }
                   }}
                   className={`p-3 border-b border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 ${
-                    (notification.type === "like" ||
+                    ((notification.type === "like" ||
                       notification.type === "comment") &&
-                    notification.postId
+                      notification.postId) ||
+                    (notification.type === "friendRequest" &&
+                      notification.user?.id)
                       ? "cursor-pointer"
                       : ""
                   }`}
@@ -719,10 +730,15 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
                   </p>
 
                   <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                    {user.latestSenderUsername ===
-                    localStorage.getItem("username")
-                      ? `You: ${user.latestMessage}`
-                      : user.latestMessage}
+                    {user.latestMessage
+                      ? user.latestSenderUsername ===
+                        localStorage.getItem("username")
+                        ? `You: ${user.latestMessage}`
+                        : user.latestMessage
+                      : user.latestSenderUsername ===
+                          localStorage.getItem("username")
+                        ? "You: Photo"
+                        : `${user.name} sent you a photo`}
                   </p>
                 </div>
               ))

@@ -500,6 +500,19 @@ public class PostService {
         return comments;
     }
 
+    public List<Like> getLikesByPost(Long postId) {
+
+        Optional<Post> postOpt = postRepository.findById(postId);
+
+        if (postOpt.isEmpty()) {
+            throw new RuntimeException("Post not found");
+        }
+
+        return likeRepository.findByPostOrderByCreatedAtDesc(
+                postOpt.get()
+        );
+    }
+
     public void editPost(
             Long postId,
             String username,
