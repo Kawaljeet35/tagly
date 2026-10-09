@@ -198,11 +198,17 @@ public class UserService {
     }
 
     public List<User> searchUsers(String keyword) {
+
         return userRepository
                 .findByNameContainingIgnoreCaseOrUsernameContainingIgnoreCase(
                         keyword,
                         keyword
-                );
+                )
+                .stream()
+                .filter(user ->
+                        !"DEACTIVATED".equals(user.getAccountStatus())
+                )
+                .toList();
     }
 
     public void deactivateAccount(String username) {

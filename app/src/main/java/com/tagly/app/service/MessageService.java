@@ -58,6 +58,10 @@ public class MessageService {
                         new RuntimeException("Receiver not found")
                 );
 
+        if ("DEACTIVATED".equals(receiver.getAccountStatus())) {
+            throw new IllegalArgumentException("Receiver is unavailable");
+        }
+
         Message message = new Message();
 
         message.setSender(sender);
@@ -131,6 +135,10 @@ public class MessageService {
                         new RuntimeException("User not found")
                 );
 
+        if ("DEACTIVATED".equals(otherUser.getAccountStatus())) {
+            throw new IllegalArgumentException("User is unavailable");
+        }
+
         List<Message> unreadMessages =
                 messageRepository
                         .findBySenderAndReceiverAndReadFalse(
@@ -163,6 +171,10 @@ public class MessageService {
                 .orElseThrow(() ->
                         new RuntimeException("User not found")
                 );
+
+        if ("DEACTIVATED".equals(otherUser.getAccountStatus())) {
+            return List.of();
+        }
 
         return messageRepository
                 .findBySenderAndReceiverOrReceiverAndSenderOrderByCreatedAtAsc(
@@ -211,6 +223,10 @@ public class MessageService {
                     otherUser.getId()
                             .equals(currentUser.getId())
             ) {
+                continue;
+            }
+
+            if ("DEACTIVATED".equals(otherUser.getAccountStatus())) {
                 continue;
             }
 

@@ -96,6 +96,10 @@ public class PostService {
         User profileUser = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        if ("DEACTIVATED".equals(profileUser.getAccountStatus())) {
+            return List.of();
+        }
+
         User currentUser = userRepository.findByUsername(currentUsername)
                 .orElseThrow(() -> new RuntimeException("Current user not found"));
 
@@ -174,7 +178,15 @@ public class PostService {
             for (FriendRequest friend : receivedFriends) {
                 allowedUsers.add(friend.getSender());
             }
-            List<Post> posts = postRepository.findByUserInOrderByCreatedAtDesc(allowedUsers);
+            List<Post> posts = postRepository
+                    .findByUserInOrderByCreatedAtDesc(allowedUsers)
+                    .stream()
+                    .filter(post ->
+                            !"DEACTIVATED".equals(
+                                    post.getUser().getAccountStatus()
+                            )
+                    )
+                    .toList();
             List<PostResponse> responses = new ArrayList<>();
             for(Post post: posts){
                 PostResponse response = new PostResponse();
@@ -265,6 +277,10 @@ public class PostService {
         User user = userOpt.get();
         Post post = postOpt.get();
 
+        if ("DEACTIVATED".equals(post.getUser().getAccountStatus())) {
+            throw new IllegalArgumentException("Post is unavailable");
+        }
+
         Optional<Like> existingLike = likeRepository.findByUserAndPost(user, post);
 
         if (existingLike.isPresent()) {
@@ -301,6 +317,13 @@ public class PostService {
 
         User user = userOpt.get();
         Comment comment = commentOpt.get();
+
+        if ("DEACTIVATED".equals(comment.getUser().getAccountStatus())
+                || "DEACTIVATED".equals(
+                comment.getPost().getUser().getAccountStatus()
+        )) {
+            throw new IllegalArgumentException("Comment is unavailable");
+        }
 
         Optional<CommentLike> existingLike =
                 commentLikeRepository.findByUserAndComment(
@@ -344,6 +367,10 @@ public class PostService {
 
         User user = userOpt.get();
         Post post = postOpt.get();
+
+        if ("DEACTIVATED".equals(post.getUser().getAccountStatus())) {
+            throw new IllegalArgumentException("Post is unavailable");
+        }
 
         Comment comment = new Comment();
 
@@ -487,9 +514,24 @@ public class PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
 
-        List<Comment> comments = commentRepository.findByPostOrderByCreatedAtAsc(post);
+        // Hide all comments and replies on posts owned by deactivated users.
+        if ("DEACTIVATED".equals(post.getUser().getAccountStatus())) {
+            return List.of();
+        }
+
+        // Hide comments and replies written by deactivated users.
+        List<Comment> comments =
+                commentRepository.findByPostOrderByCreatedAtAsc(post)
+                        .stream()
+                        .filter(comment ->
+                                !"DEACTIVATED".equals(
+                                        comment.getUser().getAccountStatus()
+                                )
+                        )
+                        .toList();
 
         for (Comment comment : comments) {
+
             boolean liked = commentLikeRepository
                     .findByUserAndComment(currentUser, comment)
                     .isPresent();
@@ -541,9 +583,7 @@ public class PostService {
         postRepository.save(post);
     }
 
-    public List<Like> getLikesForUserPosts(
-            String username
-    ) {
+    public List<Like> getLikesForUserPosts(String username) {
 
         User user = userRepository
                 .findByUsername(username)
@@ -555,12 +595,17 @@ public class PostService {
                 .findByPostUserAndUserNotOrderByCreatedAtDesc(
                         user,
                         user
-                );
+                )
+                .stream()
+                .filter(like ->
+                        !"DEACTIVATED".equals(
+                                like.getUser().getAccountStatus()
+                        )
+                )
+                .toList();
     }
 
-    public List<Comment> getCommentsForUserPosts(
-            String username
-    ) {
+    public List<Comment> getCommentsForUserPosts(String username) {
 
         User user = userRepository
                 .findByUsername(username)
@@ -572,6 +617,13 @@ public class PostService {
                 .findByPostUserAndUserNotOrderByCreatedAtDesc(
                         user,
                         user
-                );
+                )
+                .stream()
+                .filter(comment ->
+                        !"DEACTIVATED".equals(
+                                comment.getUser().getAccountStatus()
+                        )
+                )
+                .toList();
     }
 }

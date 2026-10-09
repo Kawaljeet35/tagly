@@ -30,6 +30,10 @@ public class FriendRequestService {
         User receiver = userRepository.findById(receiverId)
                 .orElseThrow(() -> new RuntimeException("Receiver not found"));
 
+        if ("DEACTIVATED".equals(receiver.getAccountStatus())) {
+            throw new IllegalArgumentException("Receiver is unavailable");
+        }
+
         if (friendRequestRepository.findBySenderAndReceiver(sender, receiver).isPresent()) {
             throw new RuntimeException("Request already sent");
         }
@@ -52,16 +56,28 @@ public class FriendRequestService {
         User receiver = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        return friendRequestRepository.findByReceiverAndStatusOrderByCreatedAtDesc(
-                receiver,
-                "PENDING"
-        );
+        return friendRequestRepository.findByReceiverAndStatus(
+                        receiver,
+                        "PENDING"
+                )
+                .stream()
+                .filter(request ->
+                        !"DEACTIVATED".equals(
+                                request.getSender().getAccountStatus()
+                        )
+                )
+                .toList();
     }
 
     public void acceptRequest(Long requestId) {
 
         FriendRequest request = friendRequestRepository.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("Request not found"));
+
+        if ("DEACTIVATED".equals(request.getSender().getAccountStatus())
+                || "DEACTIVATED".equals(request.getReceiver().getAccountStatus())) {
+            throw new IllegalArgumentException("Friend request is unavailable");
+        }
 
         request.setStatus("ACCEPTED");
 
@@ -93,7 +109,16 @@ public class FriendRequestService {
 
         sent.addAll(received);
 
-        return sent;
+        return sent.stream()
+                .filter(request ->
+                        !"DEACTIVATED".equals(
+                                request.getSender().getAccountStatus()
+                        )
+                                && !"DEACTIVATED".equals(
+                                request.getReceiver().getAccountStatus()
+                        )
+                )
+                .toList();
     }
 
     public List<FriendRequest> getFriendsByUserId(Long userId) {
@@ -109,7 +134,16 @@ public class FriendRequestService {
 
         sent.addAll(received);
 
-        return sent;
+        return sent.stream()
+                .filter(request ->
+                        !"DEACTIVATED".equals(
+                                request.getSender().getAccountStatus()
+                        )
+                                && !"DEACTIVATED".equals(
+                                request.getReceiver().getAccountStatus()
+                        )
+                )
+                .toList();
     }
 
     public String getFriendshipStatus(String currentUsername, Long userId) {
@@ -119,6 +153,10 @@ public class FriendRequestService {
 
         User otherUser = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if ("DEACTIVATED".equals(otherUser.getAccountStatus())) {
+            return "NONE";
+        }
 
         Optional<FriendRequest> sentRequest =
                 friendRequestRepository.findBySenderAndReceiver(

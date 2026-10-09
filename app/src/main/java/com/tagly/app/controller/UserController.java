@@ -4,6 +4,7 @@ import com.tagly.app.dto.ChangePasswordRequest;
 import com.tagly.app.dto.UpdateProfileRequest;
 import com.tagly.app.dto.UserResponse;
 import com.tagly.app.service.UserService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import com.tagly.app.entity.User;
 import com.tagly.app.repository.UserRepository;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -115,7 +117,12 @@ public class UserController {
     @GetMapping
     public ResponseEntity<List<UserResponse>> getAllUsers() {
 
-        List<User> users = userRepository.findAll();
+        List<User> users = userRepository.findAll()
+                .stream()
+                .filter(user ->
+                        !"DEACTIVATED".equals(user.getAccountStatus())
+                )
+                .toList();
 
         List<UserResponse> responses = users.stream()
                 .map(user -> {
@@ -124,8 +131,12 @@ public class UserController {
                     response.setId(user.getId());
                     response.setName(user.getName());
                     response.setUsername(user.getUsername());
-                    response.setProfilePictureUrl(user.getProfilePictureUrl());
-                    response.setCoverPhotoUrl(user.getCoverPhotoUrl());
+                    response.setProfilePictureUrl(
+                            user.getProfilePictureUrl()
+                    );
+                    response.setCoverPhotoUrl(
+                            user.getCoverPhotoUrl()
+                    );
 
                     return response;
                 })
@@ -135,10 +146,21 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
+    public ResponseEntity<UserResponse> getUserById(
+            @PathVariable Long id
+    ) {
 
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "User not found"
+                        )
+                );
+
+        if ("DEACTIVATED".equals(user.getAccountStatus())) {
+            return ResponseEntity.notFound().build();
+        }
 
         Authentication auth =
                 SecurityContextHolder.getContext().getAuthentication();
