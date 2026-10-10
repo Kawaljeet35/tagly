@@ -39,6 +39,15 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/reactivate")
+    public ResponseEntity<AuthResponse> reactivate(
+            @RequestBody @Valid LoginRequest request) {
+
+        AuthResponse response = authService.reactivate(request);
+
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/verify-account")
     public ResponseEntity<ApiResponse> verifyAccount(
             @RequestBody @Valid VerifyAccountRequest request) {

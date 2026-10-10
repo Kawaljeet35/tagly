@@ -1031,6 +1031,7 @@ export default function Profile({ handleLogout }) {
               <div key={post.id} id={`post-${post.id}`}>
                 <Posts
                   id={post.id}
+                  userId={post.userId}
                   name={post.name}
                   likedByCurrentUser={post.likedByCurrentUser}
                   content={post.content}

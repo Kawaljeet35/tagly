@@ -64,6 +64,28 @@ public class AuthService {
         return new AuthResponse(token);
     }
 
+    public AuthResponse reactivate(LoginRequest request) {
+        User user = userRepository.findByUsername(request.getUsername())
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Username does not exist"));
+
+        if (!passwordEncoder.matches(
+                request.getPassword(), user.getHashedPassword())) {
+            throw new IllegalArgumentException("Invalid password");
+        }
+
+        if (!"DEACTIVATED".equals(user.getAccountStatus())) {
+            throw new IllegalArgumentException("Account is already active");
+        }
+
+        user.setAccountStatus("ACTIVE");
+        userRepository.save(user);
+
+        String token = jwtUtil.generateToken(user.getUsername());
+
+        return new AuthResponse(token);
+    }
+
     public void verifyAccount(VerifyAccountRequest request) {
 
         Optional<User> theUser = userRepository.findByUsername(request.getUsername());

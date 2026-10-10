@@ -113,6 +113,7 @@ public class PostService {
             PostResponse response = new PostResponse();
 
             response.setId(post.getId());
+            response.setUserId(post.getUser().getId());
             response.setContent(post.getContent());
 
             response.setUsername(post.getUser().getUsername());
@@ -125,8 +126,8 @@ public class PostService {
 
             response.setCreatedAt(post.getCreatedAt());
 
-            response.setLikesCount(post.getLikesCount());
-            response.setCommentsCount(post.getCommentsCount());
+            response.setLikesCount(getVisibleLikeCount(post));
+            response.setCommentsCount(getVisibleCommentCount(post));
             response.setSharesCount(post.getSharesCount());
 
             response.setMediaUrl(post.getMediaUrl());
@@ -191,6 +192,7 @@ public class PostService {
             for(Post post: posts){
                 PostResponse response = new PostResponse();
                 response.setId(post.getId());
+                response.setUserId(post.getUser().getId());
                 response.setContent(post.getContent());
                 response.setUsername(post.getUser().getUsername());
                 response.setName(
@@ -199,8 +201,8 @@ public class PostService {
                                 : post.getUser().getUsername()
                 );
                 response.setCreatedAt(post.getCreatedAt());
-                response.setLikesCount(post.getLikesCount());
-                response.setCommentsCount(post.getCommentsCount());
+                response.setLikesCount(getVisibleLikeCount(post));
+                response.setCommentsCount(getVisibleCommentCount(post));
                 response.setSharesCount(post.getSharesCount());
                 response.setMediaUrl(post.getMediaUrl());
                 response.setMediaType(post.getMediaType());
@@ -232,6 +234,7 @@ public class PostService {
             PostResponse response = new PostResponse();
 
             response.setId(post.getId());
+            response.setUserId(post.getUser().getId());
             response.setContent(post.getContent());
 
             response.setUsername(post.getUser().getUsername());
@@ -244,8 +247,8 @@ public class PostService {
 
             response.setCreatedAt(post.getCreatedAt());
 
-            response.setLikesCount(post.getLikesCount());
-            response.setCommentsCount(post.getCommentsCount());
+            response.setLikesCount(getVisibleLikeCount(post));
+            response.setCommentsCount(getVisibleCommentCount(post));
 
             response.setMediaUrl(post.getMediaUrl());
             response.setMediaType(post.getMediaType());
@@ -550,9 +553,13 @@ public class PostService {
             throw new RuntimeException("Post not found");
         }
 
-        return likeRepository.findByPostOrderByCreatedAtDesc(
-                postOpt.get()
-        );
+        return likeRepository.findByPostOrderByCreatedAtDesc(postOpt.get())
+                .stream()
+                .filter(like ->
+                        !"DEACTIVATED".equals(
+                                like.getUser().getAccountStatus()
+                        ))
+                .toList();
     }
 
     public void editPost(
@@ -625,5 +632,26 @@ public class PostService {
                         )
                 )
                 .toList();
+    }
+
+    private int getVisibleLikeCount(Post post) {
+        return (int) likeRepository.findByPost(post)
+                .stream()
+                .filter(like ->
+                        !"DEACTIVATED".equals(
+                                like.getUser().getAccountStatus()
+                        ))
+                .count();
+    }
+
+    private int getVisibleCommentCount(Post post) {
+        return (int) commentRepository
+                .findByPostOrderByCreatedAtAsc(post)
+                .stream()
+                .filter(comment ->
+                        !"DEACTIVATED".equals(
+                                comment.getUser().getAccountStatus()
+                        ))
+                .count();
     }
 }

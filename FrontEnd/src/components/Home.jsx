@@ -102,6 +102,7 @@ export default function Home({ handleLogout }) {
               <Posts
                 key={post.id}
                 id={post.id}
+                userId={post.userId}
                 name={post.name}
                 likedByCurrentUser={post.likedByCurrentUser}
                 content={post.content}

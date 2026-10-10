@@ -1,8 +1,10 @@
 import ProfilePic from "../assets/pic.png";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function Posts({
   id,
+  userId,
   name,
   likedByCurrentUser,
   mediaUrl,
@@ -32,6 +34,19 @@ export default function Posts({
   const [isEditing, setIsEditing] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [editedContent, setEditedContent] = useState(content);
+
+  const navigate = useNavigate();
+
+  const handleAuthorClick = () => {
+    if (!userId) return;
+
+    const isOwnPost =
+      username &&
+      currentUsername &&
+      username.toLowerCase() === currentUsername.toLowerCase();
+
+    navigate(isOwnPost ? "/profile" : `/users/${userId}`);
+  };
 
   const handleLike = async () => {
     try {
@@ -349,20 +364,29 @@ export default function Posts({
   return (
     <div className="bg-white dark:bg-slate-900 shadow rounded-2xl flex-col max-w-lg mx-auto mt-3 w-full">
       <div className="flex pt-3 px-4 mb-3 items-center ">
-        <div className="w-12 h-12 mr-2 flex-shrink-0">
+        <button
+          type="button"
+          onClick={handleAuthorClick}
+          aria-label={`View ${name || username}'s profile`}
+          className="w-12 h-12 mr-2 flex-shrink-0 rounded-full overflow-hidden cursor-pointer p-0 border-0 bg-transparent"
+        >
           <img
             src={profilePictureUrl || ProfilePic}
-            alt="pic"
+            alt=""
             className="w-full h-full rounded-full object-cover"
           />
-        </div>
+        </button>
 
         <div className="flex justify-between w-full">
           <div className="flex flex-col justify-center ">
             <h4>
-              <span className="text-lg font-medium text-black dark:text-white hover:underline">
-                {name}
-              </span>
+              <button
+                type="button"
+                onClick={handleAuthorClick}
+                className="text-lg font-medium hover:underline cursor-pointer text-left"
+              >
+                {name || username}
+              </button>
             </h4>
             <p className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:underline">
               {createdAt}

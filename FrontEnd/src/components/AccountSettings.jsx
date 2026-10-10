@@ -9,6 +9,9 @@ export default function AccountSettings({ handleLogout }) {
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [passwordMessage, setPasswordMessage] = useState("");
   const [passwordLoading, setPasswordLoading] = useState(false);
+  const [showDeactivateModal, setShowDeactivateModal] = useState(false);
+  const [deactivationLoading, setDeactivationLoading] = useState(false);
+  const [deactivationMessage, setDeactivationMessage] = useState("");
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -89,6 +92,39 @@ export default function AccountSettings({ handleLogout }) {
     }
   };
 
+  const handleDeactivateAccount = async () => {
+    setDeactivationMessage("");
+    setDeactivationLoading(true);
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/users/deactivate`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        },
+      );
+
+      const message = await response.text();
+
+      if (!response.ok) {
+        setDeactivationMessage(message || "Failed to deactivate account");
+        return;
+      }
+
+      setShowDeactivateModal(false);
+      localStorage.removeItem("username");
+      handleLogout();
+    } catch (error) {
+      console.error("Error deactivating account:", error);
+      setDeactivationMessage("Something went wrong. Please try again.");
+    } finally {
+      setDeactivationLoading(false);
+    }
+  };
+
   const settings = [
     {
       title: "Change Password",
@@ -153,6 +189,9 @@ export default function AccountSettings({ handleLogout }) {
                         if (setting.title === "Change Password") {
                           setPasswordMessage("");
                           setShowChangePassword(true);
+                        } else if (setting.title === "Deactivate Account") {
+                          setDeactivationMessage("");
+                          setShowDeactivateModal(true);
                         }
                       }}
                       className="shrink-0 px-4 py-2 rounded-lg bg-teal-600 text-white font-medium hover:bg-teal-700 transition"
@@ -279,6 +318,63 @@ export default function AccountSettings({ handleLogout }) {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {showDeactivateModal && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4"
+          onClick={() => {
+            if (!deactivationLoading) {
+              setShowDeactivateModal(false);
+              setDeactivationMessage("");
+            }
+          }}
+        >
+          <div
+            className="w-full max-w-md bg-white dark:bg-slate-900 rounded-xl shadow-2xl p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-200 mb-3">
+              Deactivate Account
+            </h2>
+
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
+              Are you sure you want to deactivate your Tagly account? Your
+              profile and interactions will be hidden until you reactivate your
+              account.
+            </p>
+
+            {deactivationMessage && (
+              <p className="text-sm text-red-600 dark:text-red-400 mb-4">
+                {deactivationMessage}
+              </p>
+            )}
+
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                disabled={deactivationLoading}
+                onClick={() => {
+                  setShowDeactivateModal(false);
+                  setDeactivationMessage("");
+                }}
+                className="px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 disabled:opacity-60"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                disabled={deactivationLoading}
+                onClick={handleDeactivateAccount}
+                className="px-4 py-2 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 disabled:opacity-60"
+              >
+                {deactivationLoading
+                  ? "Deactivating..."
+                  : "Confirm Deactivation"}
+              </button>
+            </div>
           </div>
         </div>
       )}

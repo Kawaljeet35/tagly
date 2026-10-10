@@ -12,6 +12,8 @@ export default function Login({ onLoginSuccess }) {
   const [resetPasswordError, setResetPasswordError] = useState("");
   const [isPasswordReset, setIsPasswordReset] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [deactivatedCredentials, setDeactivatedCredentials] = useState(null);
+  const [showReactivateConfirm, setShowReactivateConfirm] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
@@ -41,6 +43,10 @@ export default function Login({ onLoginSuccess }) {
         navigate("/", { replace: true });
         onLoginSuccess();
       } else {
+        if (data.message === "Account is deactivated") {
+          setDeactivatedCredentials({ username, password });
+        }
+
         setErrorMessage(data.message || "Login failed");
       }
     } catch (error) {
@@ -139,6 +145,40 @@ export default function Login({ onLoginSuccess }) {
     }
   };
 
+  const handleReactivate = async () => {
+    if (!deactivatedCredentials) return;
+
+    try {
+      const response = await fetch(
+        "http://localhost:8080/api/auth/reactivate",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(deactivatedCredentials),
+        },
+      );
+
+      const data = await response.json();
+
+      if (response.ok) {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("username", deactivatedCredentials.username);
+        setErrorMessage("");
+        setDeactivatedCredentials(null);
+        setShowReactivateConfirm(false);
+        navigate("/", { replace: true });
+        onLoginSuccess();
+      } else {
+        setErrorMessage(data.message || "Account reactivation failed");
+      }
+    } catch (error) {
+      console.error("Error reactivating account:", error);
+      setErrorMessage("Error reactivating account");
+    }
+  };
+
   return (
     <div className="flex flex-col lg:flex-row justify-center items-center gap-8 lg:gap-16 min-h-screen px-2 transition-all duration-300">
       <div className="text-center lg:text-left">
@@ -148,7 +188,6 @@ export default function Login({ onLoginSuccess }) {
           <br /> one post at a time.
         </h1>
       </div>
-
       <div className="w-full lg:w-4/12 flex justify-center">
         <form
           onSubmit={handleLogin}
@@ -184,9 +223,30 @@ export default function Login({ onLoginSuccess }) {
           </button>
           {errorMessage &&
             errorMessage !== "No user exists with this email" &&
-            errorMessage !== "Incorrect password" && (
+            errorMessage !== "Incorrect password" &&
+            errorMessage !== "Account is deactivated" && (
               <p className="text-red-500">{errorMessage}</p>
             )}
+
+          {deactivatedCredentials && (
+            <div className="flex flex-col items-center gap-2 text-center">
+              <p className="text-red-500">Your account is deactivated.</p>
+              <p className="text-sm text-gray-600">
+                Reactivate your account to log in again.
+              </p>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setErrorMessage("");
+                  setShowReactivateConfirm(true);
+                }}
+                className="bg-teal-600 hover:bg-teal-700 text-white p-3 font-bold rounded"
+              >
+                Reactivate account
+              </button>
+            </div>
+          )}
           <button
             type="button"
             onClick={() => setIsForgotPasswordOpen(true)}
@@ -341,6 +401,57 @@ export default function Login({ onLoginSuccess }) {
                 </button>
               </div>
             )}
+          </div>
+        </div>
+      )}
+      {showReactivateConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="reactivate-title"
+            className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl"
+          >
+            <h2
+              id="reactivate-title"
+              className="text-xl font-bold text-gray-900"
+            >
+              Reactivate your account?
+            </h2>
+
+            <p className="mt-3 text-gray-600">
+              Your profile, posts, comments, likes, friendships, and messages
+              will become visible again.
+            </p>
+
+            <p className="mt-3 text-gray-700">
+              Are you sure you want to reactivate your account?
+            </p>
+
+            {errorMessage && (
+              <p className="mt-3 text-sm text-red-600">{errorMessage}</p>
+            )}
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowReactivateConfirm(false);
+                  setErrorMessage("");
+                }}
+                className="rounded-lg border border-gray-300 px-4 py-2 font-semibold text-gray-700 hover:bg-gray-100"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={handleReactivate}
+                className="rounded-lg bg-teal-600 px-4 py-2 font-semibold text-white hover:bg-teal-700"
+              >
+                Yes, reactivate my account
+              </button>
+            </div>
           </div>
         </div>
       )}
