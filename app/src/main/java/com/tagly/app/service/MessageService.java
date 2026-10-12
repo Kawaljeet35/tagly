@@ -1,6 +1,7 @@
 package com.tagly.app.service;
 
 import com.tagly.app.config.MinioProperties;
+import com.tagly.app.dto.MessageResponse;
 import com.tagly.app.entity.User;
 import com.tagly.app.entity.Message;
 import com.tagly.app.repository.MessageRepository;
@@ -9,8 +10,7 @@ import com.tagly.app.repository.UserRepository;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import io.minio.MinioClient;
-import io.minio.PutObjectArgs;
+
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -58,7 +58,8 @@ public class MessageService {
                         new RuntimeException("Receiver not found")
                 );
 
-        if ("DEACTIVATED".equals(receiver.getAccountStatus())) {
+        if ("DEACTIVATED".equals(receiver.getAccountStatus())
+                || "DELETED".equals(receiver.getAccountStatus())) {
             throw new IllegalArgumentException("Receiver is unavailable");
         }
 
@@ -155,11 +156,10 @@ public class MessageService {
         );
     }
 
-    public List<Message> getConversation(
+    public List<MessageResponse> getConversation(
             String currentUsername,
             Long otherUserId
     ) {
-
         User currentUser = userRepository
                 .findByUsername(currentUsername)
                 .orElseThrow(() ->
@@ -182,7 +182,10 @@ public class MessageService {
                         otherUser,
                         currentUser,
                         otherUser
-                );
+                )
+                .stream()
+                .map(MessageResponse::new)
+                .toList();
     }
 
     public List<InboxItemDTO> getConversationUsers(

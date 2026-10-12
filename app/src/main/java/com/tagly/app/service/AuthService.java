@@ -59,7 +59,10 @@ public class AuthService {
             throw new IllegalArgumentException("Account is deactivated");
         }
 
-        String token = jwtUtil.generateToken(user.getUsername());
+        String token = jwtUtil.generateToken(
+                user.getUsername(),
+                user.getId()
+        );
 
         return new AuthResponse(token);
     }
@@ -81,7 +84,10 @@ public class AuthService {
         user.setAccountStatus("ACTIVE");
         userRepository.save(user);
 
-        String token = jwtUtil.generateToken(user.getUsername());
+        String token = jwtUtil.generateToken(
+                user.getUsername(),
+                user.getId()
+        );
 
         return new AuthResponse(token);
     }

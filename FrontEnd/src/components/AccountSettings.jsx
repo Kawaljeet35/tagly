@@ -12,6 +12,10 @@ export default function AccountSettings({ handleLogout }) {
   const [showDeactivateModal, setShowDeactivateModal] = useState(false);
   const [deactivationLoading, setDeactivationLoading] = useState(false);
   const [deactivationMessage, setDeactivationMessage] = useState("");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteMessage, setDeleteMessage] = useState("");
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -125,6 +129,50 @@ export default function AccountSettings({ handleLogout }) {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    setDeleteMessage("");
+
+    if (!deletePassword) {
+      setDeleteMessage("Please enter your current password");
+      return;
+    }
+
+    setDeleteLoading(true);
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/users/delete`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify({
+            password: deletePassword,
+          }),
+        },
+      );
+
+      const message = await response.text();
+
+      if (!response.ok) {
+        setDeleteMessage(message || "Failed to delete account");
+        return;
+      }
+
+      setShowDeleteModal(false);
+      setDeletePassword("");
+      localStorage.removeItem("username");
+      handleLogout();
+    } catch (error) {
+      console.error("Error deleting account:", error);
+      setDeleteMessage("Something went wrong. Please try again.");
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
   const settings = [
     {
       title: "Change Password",
@@ -192,6 +240,10 @@ export default function AccountSettings({ handleLogout }) {
                         } else if (setting.title === "Deactivate Account") {
                           setDeactivationMessage("");
                           setShowDeactivateModal(true);
+                        } else if (setting.title === "Delete Account") {
+                          setDeleteMessage("");
+                          setDeletePassword("");
+                          setShowDeleteModal(true);
                         }
                       }}
                       className="shrink-0 px-4 py-2 rounded-lg bg-teal-600 text-white font-medium hover:bg-teal-700 transition"
@@ -373,6 +425,88 @@ export default function AccountSettings({ handleLogout }) {
                 {deactivationLoading
                   ? "Deactivating..."
                   : "Confirm Deactivation"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showDeleteModal && (
+        <div
+          className="fixed inset-0 z-[110] bg-black/60 flex items-center justify-center p-4"
+          onClick={() => {
+            if (!deleteLoading) {
+              setShowDeleteModal(false);
+              setDeletePassword("");
+              setDeleteMessage("");
+            }
+          }}
+        >
+          <div
+            className="w-full max-w-md bg-white dark:bg-slate-900 rounded-xl shadow-2xl p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-2xl font-bold text-red-600 mb-3">
+              Permanently Delete Account
+            </h2>
+
+            <p className="text-gray-600 dark:text-gray-300 mb-4">
+              This action is permanent. Your posts, comments, likes, friend
+              requests, and profile media will be deleted. Your existing
+              conversations will remain visible to other users, with your
+              identity displayed as Deleted User.
+            </p>
+
+            <p className="text-sm font-medium text-gray-800 dark:text-gray-200 mb-4">
+              Enter your current password to confirm account deletion.
+            </p>
+
+            <div className="mb-4">
+              <label
+                htmlFor="delete-account-password"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
+                Current Password
+              </label>
+
+              <input
+                id="delete-account-password"
+                type="password"
+                value={deletePassword}
+                onChange={(e) => setDeletePassword(e.target.value)}
+                autoComplete="current-password"
+                disabled={deleteLoading}
+                className="w-full border border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 bg-white dark:bg-slate-800 text-gray-900 dark:text-gray-200 outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-60"
+                placeholder="Enter your current password"
+              />
+            </div>
+
+            {deleteMessage && (
+              <p className="text-sm text-red-600 dark:text-red-400 mb-4">
+                {deleteMessage}
+              </p>
+            )}
+
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                disabled={deleteLoading}
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setDeletePassword("");
+                  setDeleteMessage("");
+                }}
+                className="px-4 py-2 rounded-lg border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 disabled:opacity-60"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                disabled={deleteLoading}
+                onClick={handleDeleteAccount}
+                className="px-4 py-2 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 disabled:opacity-60"
+              >
+                {deleteLoading ? "Deleting..." : "Permanently Delete"}
               </button>
             </div>
           </div>

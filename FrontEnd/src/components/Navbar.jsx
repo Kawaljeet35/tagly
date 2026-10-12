@@ -213,17 +213,43 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
   };
 
   const openChat = async (user) => {
+    const headers = {
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    };
+
+    let profileData = null;
+    let isDeletedUser = false;
+
     try {
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/api/users/${user.userId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        },
+        { headers },
       );
 
-      const profileData = response.ok ? await response.json() : null;
+      if (response.ok) {
+        profileData = await response.json();
+      } else if (response.status === 404) {
+        // Deleted accounts are hidden from profile lookups.
+        // Check retained messages to identify a deleted participant.
+        const historyResponse = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/messages/${user.userId}`,
+          { headers },
+        );
+
+        if (historyResponse.ok) {
+          const history = await historyResponse.json();
+
+          isDeletedUser =
+            Array.isArray(history) &&
+            history.some((message) =>
+              [message.sender, message.receiver].some(
+                (participant) =>
+                  Number(participant?.id) === Number(user.userId) &&
+                  participant?.accountStatus === "DELETED",
+              ),
+            );
+        }
+      }
 
       setActiveChats((prev) => {
         if (prev.some((chat) => chat.userId === user.userId)) {
@@ -234,7 +260,13 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
           ...prev,
           {
             ...user,
-            profilePictureUrl: profileData?.profilePictureUrl || null,
+            name: isDeletedUser
+              ? "Deleted User"
+              : profileData?.name || user.name || "Chat",
+            profilePictureUrl: isDeletedUser
+              ? null
+              : profileData?.profilePictureUrl || null,
+            isDeletedUser,
           },
         ];
       });
@@ -246,7 +278,13 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
           return prev;
         }
 
-        return [...prev, user];
+        return [
+          ...prev,
+          {
+            ...user,
+            isDeletedUser: false,
+          },
+        ];
       });
     }
 
@@ -254,9 +292,7 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
 
     fetch(`${import.meta.env.VITE_API_URL}/api/messages/read/${user.userId}`, {
       method: "PUT",
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
+      headers,
     });
 
     setShowMessages(false);
@@ -1015,7 +1051,11 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
           </div>
 
           {!minimizedChats.includes(chat.userId) && (
-            <ChatWindow userId={chat.userId} userName={chat.name} />
+            <ChatWindow
+              userId={chat.userId}
+              userName={chat.name}
+              isDeletedUser={chat.isDeletedUser}
+            />
           )}
         </div>
       ))}

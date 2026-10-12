@@ -10,26 +10,62 @@ export default function Messages({ handleLogout }) {
   const [minimized, setMinimized] = useState(false);
   const [userName, setUserName] = useState("Chat");
   const [userProfilePicture, setUserProfilePicture] = useState(null);
+  const [isDeletedUser, setIsDeletedUser] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
+      const headers = {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      };
+
       try {
         const response = await fetch(
           `${import.meta.env.VITE_API_URL}/api/users/${id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          },
+          { headers },
         );
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch user");
+        if (response.ok) {
+          const data = await response.json();
+
+          setUserName(data.name || data.username || "Chat");
+          setUserProfilePicture(data.profilePictureUrl || null);
+          setIsDeletedUser(false);
+          return;
         }
 
-        const data = await response.json();
-        setUserName(data.name || data.username || "Chat");
-        setUserProfilePicture(data.profilePictureUrl || null);
+        // Deleted accounts are intentionally hidden from profile lookups.
+        // Check the retained conversation history to identify a deleted sender.
+        if (response.status === 404) {
+          const historyResponse = await fetch(
+            `${import.meta.env.VITE_API_URL}/api/messages/${id}`,
+            { headers },
+          );
+
+          if (historyResponse.ok) {
+            const history = await historyResponse.json();
+
+            const deletedUserFound =
+              Array.isArray(history) &&
+              history.some((message) =>
+                [message.sender, message.receiver].some(
+                  (participant) =>
+                    Number(participant?.id) === Number(id) &&
+                    participant?.accountStatus === "DELETED",
+                ),
+              );
+
+            if (deletedUserFound) {
+              setUserName("Deleted User");
+              setUserProfilePicture(null);
+              setIsDeletedUser(true);
+              return;
+            }
+          }
+        }
+
+        setUserName("Chat");
+        setUserProfilePicture(null);
+        setIsDeletedUser(false);
       } catch (error) {
         console.error("Error fetching message user:", error);
       }
@@ -45,8 +81,14 @@ export default function Messages({ handleLogout }) {
       <div className="fixed bottom-4 right-4 z-50 w-80 bg-white border shadow-xl rounded-xl">
         <div className="flex items-center justify-between p-3 border-b bg-teal-600 rounded-t-xl">
           <div
-            onClick={() => navigate(`/users/${id}`)}
-            className="flex items-center gap-2 cursor-pointer"
+            onClick={() => {
+              if (!isDeletedUser) {
+                navigate(`/users/${id}`);
+              }
+            }}
+            className={`flex items-center gap-2 ${
+              isDeletedUser ? "cursor-default" : "cursor-pointer"
+            }`}
           >
             <img
               src={userProfilePicture || ProfilePic}
@@ -54,10 +96,15 @@ export default function Messages({ handleLogout }) {
               className="w-8 h-8 rounded-full object-cover"
             />
 
-            <h2 className="font-semibold text-white hover:underline">
+            <h2
+              className={`font-semibold text-white ${
+                isDeletedUser ? "" : "hover:underline"
+              }`}
+            >
               {userName}
             </h2>
           </div>
+
           <div className="flex items-center gap-2">
             <button
               onClick={() => setMinimized((prev) => !prev)}
@@ -75,7 +122,13 @@ export default function Messages({ handleLogout }) {
           </div>
         </div>
 
-        {!minimized && <ChatWindow userId={Number(id)} userName={userName} />}
+        {!minimized && (
+          <ChatWindow
+            userId={Number(id)}
+            userName={userName}
+            isDeletedUser={isDeletedUser}
+          />
+        )}
       </div>
     </>
   );

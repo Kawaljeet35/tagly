@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useRef } from "react";
 
-export default function ChatWindow({ userId, userName }) {
+export default function ChatWindow({ userId, userName, isDeletedUser }) {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [selectedImage, setSelectedImage] = useState(null);
@@ -28,6 +28,7 @@ export default function ChatWindow({ userId, userName }) {
   };
 
   const sendMessage = async () => {
+    if (isDeletedUser) return;
     if (!newMessage.trim() && !selectedImage) return;
 
     const formData = new FormData();
@@ -122,40 +123,52 @@ export default function ChatWindow({ userId, userName }) {
         <div ref={messagesEndRef}></div>
       </div>
 
-      {selectedImage && (
-        <div className="px-3 py-1 bg-gray-100 border-t text-xs truncate">
-          📷 {selectedImage.name}
+      {!isDeletedUser ? (
+        <>
+          {selectedImage && (
+            <div className="px-3 py-1 bg-gray-100 border-t text-xs truncate">
+              📷 {selectedImage.name}
+            </div>
+          )}
+
+          <div className="p-3 border-t flex gap-2 bg-teal-600">
+            <label className="bg-slate-700 text-white px-3 py-2 rounded-lg cursor-pointer">
+              📷
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setSelectedImage(e.target.files[0])}
+                className="hidden"
+              />
+            </label>
+
+            <input
+              type="text"
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  sendMessage();
+                }
+              }}
+              placeholder="Type a message..."
+              className="flex-1 min-w-0 border rounded-lg px-3 py-2 outline-none text-black"
+            />
+
+            <button
+              onClick={sendMessage}
+              className="bg-slate-700 text-white px-4 py-2 rounded-lg"
+            >
+              Send
+            </button>
+          </div>
+        </>
+      ) : (
+        <div className="p-3 border-t bg-gray-100 text-sm text-gray-600 text-center">
+          This account has been deleted. You can still read your conversation,
+          but you cannot send new messages.
         </div>
       )}
-      <div className="p-3 border-t flex gap-2 bg-teal-600">
-        <label className="bg-slate-700 text-white px-3 py-2 rounded-lg cursor-pointer">
-          📷
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => setSelectedImage(e.target.files[0])}
-            className="hidden"
-          />
-        </label>
-        <input
-          type="text"
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              sendMessage();
-            }
-          }}
-          placeholder="Type a message..."
-          className="flex-1 min-w-0 border rounded-lg px-3 py-2 outline-none text-black"
-        />
-        <button
-          onClick={sendMessage}
-          className="bg-slate-700 text-white px-4 py-2 rounded-lg"
-        >
-          Send
-        </button>
-      </div>
     </div>
   );
 }

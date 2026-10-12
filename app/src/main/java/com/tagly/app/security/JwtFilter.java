@@ -37,47 +37,47 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String authHeader = request.getHeader("Authorization");
 
-        System.out.println("REQUEST PATH: " + request.getRequestURI());
-        System.out.println("AUTH HEADER: " + authHeader);
-
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
 
             String token = authHeader.substring(7);
 
             try {
-                String username = jwtUtil.extractUsername(token);
+                Long userId = jwtUtil.extractUserId(token);
 
-                System.out.println("AUTH USERNAME: " + username);
+                Optional<User> user = userRepository.findById(userId);
 
-                Optional<User> user =
-                        userRepository.findByUsername(username);
-
-                if (user.isPresent()) {
-
-                    User ourUser = user.get();
-
-                    if ("DEACTIVATED".equals(ourUser.getAccountStatus())) {
-                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                        return;
-                    }
-
-                    UsernamePasswordAuthenticationToken authToken =
-                            new UsernamePasswordAuthenticationToken(
-                                    ourUser.getUsername(),
-                                    null,
-                                    new ArrayList<>()
-                            );
-
-                    SecurityContextHolder
-                            .getContext()
-                            .setAuthentication(authToken);
+                if (user.isEmpty()) {
+                    response.setStatus(
+                            HttpServletResponse.SC_UNAUTHORIZED
+                    );
+                    return;
                 }
 
+                User ourUser = user.get();
+
+                if ("DEACTIVATED".equals(ourUser.getAccountStatus())
+                        || "DELETED".equals(ourUser.getAccountStatus())) {
+                    response.setStatus(
+                            HttpServletResponse.SC_UNAUTHORIZED
+                    );
+                    return;
+                }
+
+                UsernamePasswordAuthenticationToken authToken =
+                        new UsernamePasswordAuthenticationToken(
+                                ourUser.getUsername(),
+                                null,
+                                new ArrayList<>()
+                        );
+
+                SecurityContextHolder
+                        .getContext()
+                        .setAuthentication(authToken);
+
             } catch (Exception e) {
-
-                System.out.println("JWT ERROR: " + e.getMessage());
-
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setStatus(
+                        HttpServletResponse.SC_UNAUTHORIZED
+                );
                 return;
             }
         }

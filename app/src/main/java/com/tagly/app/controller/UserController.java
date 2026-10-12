@@ -1,6 +1,7 @@
 package com.tagly.app.controller;
 
 import com.tagly.app.dto.ChangePasswordRequest;
+import com.tagly.app.dto.DeleteAccountRequest;
 import com.tagly.app.dto.UpdateProfileRequest;
 import com.tagly.app.dto.UserResponse;
 import com.tagly.app.service.UserService;
@@ -91,6 +92,35 @@ public class UserController {
         return ResponseEntity.ok("Account deactivated");
     }
 
+    @DeleteMapping("/delete")
+    public ResponseEntity<String> deleteAccount(
+            @RequestBody DeleteAccountRequest request
+    ) {
+        Authentication auth =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        if (request == null
+                || request.getPassword() == null
+                || request.getPassword().isBlank()) {
+            return ResponseEntity.badRequest()
+                    .body("Password is required");
+        }
+
+        String username = auth.getName();
+
+        try {
+            userService.deleteAccount(
+                    username,
+                    request.getPassword()
+            );
+
+            return ResponseEntity.ok("Account deleted successfully");
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
     @PutMapping("/change-password")
     public ResponseEntity<String> changePassword(
             @RequestBody ChangePasswordRequest request
@@ -121,6 +151,7 @@ public class UserController {
                 .stream()
                 .filter(user ->
                         !"DEACTIVATED".equals(user.getAccountStatus())
+                                && !"DELETED".equals(user.getAccountStatus())
                 )
                 .toList();
 
@@ -158,7 +189,8 @@ public class UserController {
                         )
                 );
 
-        if ("DEACTIVATED".equals(user.getAccountStatus())) {
+        if ("DEACTIVATED".equals(user.getAccountStatus())
+                || "DELETED".equals(user.getAccountStatus())) {
             return ResponseEntity.notFound().build();
         }
 

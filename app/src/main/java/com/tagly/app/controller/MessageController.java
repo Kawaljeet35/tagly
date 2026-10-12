@@ -1,6 +1,7 @@
 package com.tagly.app.controller;
 
 import com.tagly.app.dto.InboxItemDTO;
+import com.tagly.app.dto.MessageResponse;
 import com.tagly.app.entity.Message;
 import com.tagly.app.service.MessageService;
 import org.springframework.http.ResponseEntity;
@@ -43,11 +44,9 @@ public class MessageController {
     }
 
     @GetMapping("/{otherUserId}")
-    public ResponseEntity<List<Message>>
-    getConversation(
+    public ResponseEntity<List<MessageResponse>> getConversation(
             @PathVariable Long otherUserId
     ) {
-
         String username = SecurityContextHolder
                 .getContext()
                 .getAuthentication()
