@@ -47,6 +47,8 @@ export default function Profile({ handleLogout }) {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const postIdFromUrl = searchParams.get("post");
+  const commentIdFromUrl = searchParams.get("comment");
+  const parentCommentIdFromUrl = searchParams.get("parentComment");
   const navigate = useNavigate();
 
   const fetchUser = async () => {
@@ -1045,6 +1047,8 @@ export default function Profile({ handleLogout }) {
                   profilePictureUrl={post.profilePictureUrl}
                   username={post.username}
                   currentUsername={currentUser?.username}
+                  targetCommentId={commentIdFromUrl}
+                  targetParentCommentId={parentCommentIdFromUrl}
                   onDelete={fetchPosts}
                 />
               </div>

@@ -14,6 +14,10 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
             User user
     );
     List<Comment> findByParentComment(Comment parentComment);
+    List<Comment> findByParentComment_UserAndUserNotOrderByCreatedAtDesc(
+            User parentCommentOwner,
+            User replyAuthor
+    );
     boolean existsByPostAndUser(Post post, User user);
     List<Comment> findByUser(User user);
 }

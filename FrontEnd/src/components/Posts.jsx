@@ -1,5 +1,5 @@
 import ProfilePic from "../assets/pic.png";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function Posts({
@@ -17,6 +17,8 @@ export default function Posts({
   sharesCount,
   profilePictureUrl,
   currentUsername,
+  targetCommentId,
+  targetParentCommentId,
   username,
   onDelete,
 }) {
@@ -276,6 +278,39 @@ export default function Posts({
       console.error(error);
     }
   };
+
+  useEffect(() => {
+    if (!targetCommentId || (!targetParentCommentId && !targetCommentId)) {
+      if (!targetCommentId) return;
+    }
+
+    setShowComments(true);
+    fetchComments();
+  }, [targetCommentId, id]);
+
+  useEffect(() => {
+    if (!showComments || comments.length === 0 || !targetCommentId) return;
+
+    const targetComment = comments.find(
+      (comment) => String(comment.id) === String(targetCommentId),
+    );
+
+    if (!targetComment) return;
+
+    if (targetComment.parentCommentId) {
+      setHiddenReplies((prev) => {
+        const updated = new Set(prev);
+        updated.delete(targetComment.parentCommentId);
+        return updated;
+      });
+    }
+
+    requestAnimationFrame(() => {
+      document
+        .getElementById(`comment-${targetCommentId}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  }, [showComments, comments, targetCommentId]);
 
   const fetchLikes = async () => {
     try {
@@ -743,7 +778,14 @@ export default function Posts({
               return (
                 <div
                   key={comment.id}
-                  className={`flex gap-3 ${comment.parentCommentId ? "ml-10" : ""}`}
+                  id={`comment-${comment.id}`}
+                  className={`flex gap-3 rounded-lg transition-colors duration-500 ${
+                    comment.parentCommentId ? "ml-10" : ""
+                  } ${
+                    String(comment.id) === String(targetCommentId)
+                      ? "bg-teal-100 dark:bg-teal-900/40 ring-2 ring-teal-500 p-2"
+                      : ""
+                  }`}
                 >
                   <img
                     src={comment.user?.profilePictureUrl || ProfilePic}

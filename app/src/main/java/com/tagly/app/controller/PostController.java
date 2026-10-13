@@ -1,5 +1,6 @@
 package com.tagly.app.controller;
 
+import com.tagly.app.dto.CommentLikeNotificationResponse;
 import com.tagly.app.dto.PostResponse;
 import com.tagly.app.entity.Comment;
 import com.tagly.app.entity.Like;
@@ -195,6 +196,16 @@ public class PostController {
                         username
                 )
         );
+    }
+
+    @GetMapping("/notifications/comment-likes")
+    public ResponseEntity<List<CommentLikeNotificationResponse>> getCommentLikeNotifications() {
+        String username = SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getName();
+
+        return ResponseEntity.ok(postService.getCommentLikeNotifications(username));
     }
 
     @GetMapping("/notifications/comments")

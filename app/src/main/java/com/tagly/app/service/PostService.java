@@ -1,7 +1,9 @@
 package com.tagly.app.service;
 
 import com.tagly.app.config.MinioProperties;
+import com.tagly.app.dto.CommentLikeNotificationResponse;
 import com.tagly.app.dto.PostResponse;
+import com.tagly.app.dto.UserResponse;
 import com.tagly.app.entity.*;
 import com.tagly.app.repository.*;
 import io.minio.MinioClient;
@@ -12,9 +14,8 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -612,25 +613,70 @@ public class PostService {
                 .toList();
     }
 
-    public List<Comment> getCommentsForUserPosts(String username) {
+    public List<CommentLikeNotificationResponse> getCommentLikeNotifications(String username) {
+        User recipient = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        User user = userRepository
-                .findByUsername(username)
-                .orElseThrow(() ->
-                        new RuntimeException("User not found")
-                );
-
-        return commentRepository
-                .findByPostUserAndUserNotOrderByCreatedAtDesc(
-                        user,
-                        user
-                )
+        return commentLikeRepository
+                .findByComment_UserAndUserNotOrderByCreatedAtDesc(recipient, recipient)
                 .stream()
-                .filter(comment ->
-                        !"DEACTIVATED".equals(
-                                comment.getUser().getAccountStatus()
-                        )
-                )
+                .filter(commentLike -> "ACTIVE".equals(commentLike.getUser().getAccountStatus()))
+                .filter(commentLike -> "ACTIVE".equals(commentLike.getComment().getUser().getAccountStatus()))
+                .filter(commentLike -> "ACTIVE".equals(commentLike.getComment().getPost().getUser().getAccountStatus()))
+                .map(commentLike -> {
+                    Comment comment = commentLike.getComment();
+                    User actor = commentLike.getUser();
+
+                    UserResponse actorResponse = new UserResponse();
+                    actorResponse.setId(actor.getId());
+                    actorResponse.setName(actor.getName());
+                    actorResponse.setUsername(actor.getUsername());
+                    actorResponse.setProfilePictureUrl(actor.getProfilePictureUrl());
+
+                    CommentLikeNotificationResponse notification = new CommentLikeNotificationResponse();
+                    notification.setId(commentLike.getId());
+                    notification.setUser(actorResponse);
+                    notification.setPostId(comment.getPost().getId());
+                    notification.setPostOwnerId(comment.getPost().getUser().getId());
+                    notification.setCommentId(comment.getId());
+                    notification.setParentCommentId(comment.getParentCommentId());
+                    notification.setCreatedAt(commentLike.getCreatedAt());
+                    return notification;
+                })
+                .toList();
+    }
+
+    public List<Comment> getCommentsForUserPosts(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Top-level comments on the recipient's own posts.
+        List<Comment> commentsOnOwnPosts = commentRepository
+                .findByPostUserAndUserNotOrderByCreatedAtDesc(user, user);
+
+        // Replies to comments written by the recipient, including on other people's posts.
+        List<Comment> repliesToOwnComments = commentRepository
+                .findByParentComment_UserAndUserNotOrderByCreatedAtDesc(user, user);
+
+        Map<Long, Comment> notifications = new HashMap<>();
+
+        // Keep existing post-comment notifications limited to top-level comments.
+        commentsOnOwnPosts.stream()
+                .filter(comment -> comment.getParentComment() == null)
+                .filter(comment -> !"DEACTIVATED".equals(
+                        comment.getUser().getAccountStatus()))
+                .forEach(comment -> notifications.put(comment.getId(), comment));
+
+        // Include replies to the recipient's comments.
+        repliesToOwnComments.stream()
+                .filter(reply -> !"DEACTIVATED".equals(
+                        reply.getUser().getAccountStatus()))
+                .forEach(reply -> notifications.put(reply.getId(), reply));
+
+        return notifications.values().stream()
+                .sorted(Comparator.comparing(
+                        Comment::getCreatedAt,
+                        Comparator.nullsLast(Comparator.reverseOrder())))
                 .toList();
     }
 

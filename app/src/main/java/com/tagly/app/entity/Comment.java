@@ -1,6 +1,7 @@
 package com.tagly.app.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -98,6 +99,13 @@ public class Comment {
     public Long getParentCommentId() {
         return parentComment != null
                 ? parentComment.getId()
+                : null;
+    }
+
+    @JsonProperty("postOwnerId")
+    public Long getPostOwnerId() {
+        return post != null && post.getUser() != null
+                ? post.getUser().getId()
                 : null;
     }
 

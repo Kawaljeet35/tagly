@@ -28,6 +28,7 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
   const [likeNotifications, setLikeNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [commentNotifications, setCommentNotifications] = useState([]);
+  const [commentLikeNotifications, setCommentLikeNotifications] = useState([]);
   const [showMessages, setShowMessages] = useState(false);
   const [inboxUsers, setInboxUsers] = useState([]);
   const [unreadChats, setUnreadChats] = useState([]);
@@ -65,10 +66,24 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
 
     ...commentNotifications.map((comment) => ({
       id: `comment-${comment.id}`,
-      type: "comment",
+      type: comment.parentCommentId ? "reply" : "comment",
       user: comment.user,
       postId: comment.postId,
+      postOwnerId: comment.postOwnerId,
+      commentId: comment.id,
+      parentCommentId: comment.parentCommentId,
       createdAt: comment.createdAt,
+    })),
+
+    ...commentLikeNotifications.map((notification) => ({
+      id: `comment-like-${notification.id}`,
+      type: "commentLike",
+      user: notification.user,
+      postId: notification.postId,
+      postOwnerId: notification.postOwnerId,
+      commentId: notification.commentId,
+      parentCommentId: notification.parentCommentId,
+      createdAt: notification.createdAt,
     })),
   ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
@@ -169,6 +184,32 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
       setCommentNotifications(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error(error);
+    }
+  };
+
+  const fetchCommentLikeNotifications = async () => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/posts/notifications/comment-likes`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        console.error(
+          "Failed to fetch comment-like notifications:",
+          response.status,
+        );
+        return;
+      }
+
+      const data = await response.json();
+      setCommentLikeNotifications(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("Error fetching comment-like notifications:", error);
     }
   };
 
@@ -349,6 +390,7 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
     fetchPendingRequests();
     fetchLikeNotifications();
     fetchCommentNotifications();
+    fetchCommentLikeNotifications();
     fetchInboxUsers();
     fetchCurrentUser();
 
@@ -357,6 +399,7 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
       fetchPendingRequests();
       fetchLikeNotifications();
       fetchCommentNotifications();
+      fetchCommentLikeNotifications();
     }, 3000);
 
     if (location.pathname === "/") {
@@ -374,7 +417,8 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
     const currentCount =
       pendingRequests.length +
       likeNotifications.length +
-      commentNotifications.length;
+      commentNotifications.length +
+      commentLikeNotifications.length;
 
     if (
       previousNotificationCount > 0 &&
@@ -385,7 +429,12 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
     }
 
     setPreviousNotificationCount(currentCount);
-  }, [pendingRequests, likeNotifications, commentNotifications]);
+  }, [
+    pendingRequests,
+    likeNotifications,
+    commentNotifications,
+    commentLikeNotifications,
+  ]);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", darkMode);
@@ -613,12 +662,14 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
           {!hasSeenNotifications &&
             pendingRequests.length +
               likeNotifications.length +
-              commentNotifications.length >
+              commentNotifications.length +
+              commentLikeNotifications.length >
               0 && (
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1">
                 {pendingRequests.length +
                   likeNotifications.length +
-                  commentNotifications.length}
+                  commentNotifications.length +
+                  commentLikeNotifications.length}
               </span>
             )}
           <svg
@@ -660,6 +711,49 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
                   key={notification.id}
                   onClick={() => {
                     if (
+                      notification.type === "commentLike" &&
+                      notification.postOwnerId &&
+                      notification.postId &&
+                      notification.commentId
+                    ) {
+                      setShowNotifications(false);
+
+                      const params = new URLSearchParams({
+                        post: notification.postId,
+                        comment: notification.commentId,
+                        ...(notification.parentCommentId
+                          ? { parentComment: notification.parentCommentId }
+                          : {}),
+                      });
+
+                      navigate(
+                        `/users/${notification.postOwnerId}?${params.toString()}`,
+                      );
+                      return;
+                    }
+
+                    if (
+                      notification.type === "reply" &&
+                      notification.postOwnerId &&
+                      notification.postId &&
+                      notification.commentId &&
+                      notification.parentCommentId
+                    ) {
+                      setShowNotifications(false);
+
+                      const params = new URLSearchParams({
+                        post: notification.postId,
+                        comment: notification.commentId,
+                        parentComment: notification.parentCommentId,
+                      });
+
+                      navigate(
+                        `/users/${notification.postOwnerId}?${params.toString()}`,
+                      );
+
+                      return;
+                    }
+                    if (
                       (notification.type === "like" ||
                         notification.type === "comment") &&
                       notification.postId
@@ -679,10 +773,15 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
                   }}
                   className={`p-3 border-b border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 ${
                     ((notification.type === "like" ||
-                      notification.type === "comment") &&
+                      notification.type === "comment" ||
+                      notification.type === "reply") &&
                       notification.postId) ||
                     (notification.type === "friendRequest" &&
-                      notification.user?.id)
+                      notification.user?.id) ||
+                    (notification.type === "commentLike" &&
+                      notification.postOwnerId &&
+                      notification.postId &&
+                      notification.commentId)
                       ? "cursor-pointer"
                       : ""
                   }`}
@@ -695,7 +794,15 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
                       ? "sent you a friend request"
                       : notification.type === "like"
                         ? "liked your post"
-                        : "commented on your post"}
+                        : notification.type === "reply"
+                          ? "replied to your comment"
+                          : notification.type === "comment"
+                            ? "commented on your post"
+                            : notification.type === "commentLike"
+                              ? notification.parentCommentId
+                                ? "liked your reply"
+                                : "liked your comment"
+                              : ""}
                   </p>
                 </div>
               ))

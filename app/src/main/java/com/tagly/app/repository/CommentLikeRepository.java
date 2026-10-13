@@ -15,4 +15,9 @@ public interface CommentLikeRepository extends JpaRepository<CommentLike, Long> 
             Comment comment
     );
     List<CommentLike> findByUser(User user);
+
+    List<CommentLike> findByComment_UserAndUserNotOrderByCreatedAtDesc(
+            User commentAuthor,
+            User liker
+    );
 }
