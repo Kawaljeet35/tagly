@@ -110,7 +110,14 @@ export default function DiscoverPage({ handleLogout }) {
 
     const data = await response.json();
 
-    setVideoComments(data);
+    const topLevelComments = data.filter((comment) => !comment.parentCommentId);
+
+    const orderedComments = topLevelComments.flatMap((comment) => [
+      comment,
+      ...data.filter((reply) => reply.parentCommentId === comment.id),
+    ]);
+
+    setVideoComments(orderedComments);
     setShowVideoComments(true);
   };
 
@@ -207,6 +214,7 @@ export default function DiscoverPage({ handleLogout }) {
     if (!videoReplyText.trim() || !selectedVideo) return;
 
     try {
+      console.log("Submitting reply to comment ID:", commentId);
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/api/posts/comments/${commentId}/reply`,
         {
@@ -484,8 +492,8 @@ export default function DiscoverPage({ handleLogout }) {
                                     <button
                                       type="button"
                                       onClick={() => {
-                                        setVideoReplyingTo(
-                                          videoReplyingTo === comment.id
+                                        setVideoReplyingTo((currentId) =>
+                                          currentId === comment.id
                                             ? null
                                             : comment.id,
                                         );

@@ -273,7 +273,16 @@ export default function Posts({
 
       const data = await response.json();
 
-      setComments(data);
+      const topLevelComments = data.filter(
+        (comment) => !comment.parentCommentId,
+      );
+
+      const orderedComments = topLevelComments.flatMap((comment) => [
+        comment,
+        ...data.filter((reply) => reply.parentCommentId === comment.id),
+      ]);
+
+      setComments(orderedComments);
     } catch (error) {
       console.error(error);
     }
