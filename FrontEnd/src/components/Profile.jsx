@@ -603,7 +603,16 @@ export default function Profile({ handleLogout }) {
 
       const data = await response.json();
 
-      setPhotoComments(data);
+      const topLevelComments = data.filter(
+        (comment) => !comment.parentCommentId,
+      );
+
+      const orderedComments = topLevelComments.flatMap((comment) => [
+        comment,
+        ...data.filter((reply) => reply.parentCommentId === comment.id),
+      ]);
+
+      setPhotoComments(orderedComments);
       setShowPhotoComments(true);
     } catch (error) {
       console.error("Error fetching photo comments:", error);
@@ -629,7 +638,14 @@ export default function Profile({ handleLogout }) {
 
     const data = await response.json();
 
-    setVideoComments(data);
+    const topLevelComments = data.filter((comment) => !comment.parentCommentId);
+
+    const orderedComments = topLevelComments.flatMap((comment) => [
+      comment,
+      ...data.filter((reply) => reply.parentCommentId === comment.id),
+    ]);
+
+    setVideoComments(orderedComments);
     setShowVideoComments(true);
   };
 
