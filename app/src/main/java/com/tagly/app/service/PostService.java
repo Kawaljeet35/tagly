@@ -694,10 +694,13 @@ public class PostService {
         return (int) commentRepository
                 .findByPostOrderByCreatedAtAsc(post)
                 .stream()
+                .filter(comment -> comment.getParentComment() == null)
                 .filter(comment ->
                         !"DEACTIVATED".equals(
                                 comment.getUser().getAccountStatus()
-                        ))
+                        )
+                )
                 .count();
     }
+
 }
