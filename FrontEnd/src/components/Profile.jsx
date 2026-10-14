@@ -919,6 +919,18 @@ export default function Profile({ handleLogout }) {
   }, [id, currentUser]);
 
   useEffect(() => {
+    if (postIdFromUrl) return;
+
+    setActiveTab("posts");
+    window.scrollTo({ top: 0, behavior: "auto" });
+
+    setSelectedPhoto(null);
+    setShowPhotoComments(false);
+    setSelectedVideo(null);
+    setShowVideoComments(false);
+  }, [id, postIdFromUrl]);
+
+  useEffect(() => {
     if (!postIdFromUrl || posts.length === 0) {
       return;
     }
