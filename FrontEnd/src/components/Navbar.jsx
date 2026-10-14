@@ -785,24 +785,32 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
                       : ""
                   }`}
                 >
-                  <p className="text-sm text-black dark:text-gray-200">
-                    <span className="font-semibold">
-                      {notification.user.name || notification.user.username}
-                    </span>{" "}
-                    {notification.type === "friendRequest"
-                      ? "sent you a friend request"
-                      : notification.type === "like"
-                        ? "liked your post"
-                        : notification.type === "reply"
-                          ? "replied to your comment"
-                          : notification.type === "comment"
-                            ? "commented on your post"
-                            : notification.type === "commentLike"
-                              ? notification.parentCommentId
-                                ? "liked your reply"
-                                : "liked your comment"
-                              : ""}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={notification.user?.profilePictureUrl || ProfilePic}
+                      alt=""
+                      className="w-9 h-9 rounded-full object-cover flex-shrink-0"
+                    />
+
+                    <p className="text-sm text-black dark:text-gray-200">
+                      <span className="font-semibold">
+                        {notification.user?.name || notification.user?.username}
+                      </span>{" "}
+                      {notification.type === "friendRequest"
+                        ? "sent you a friend request"
+                        : notification.type === "like"
+                          ? "liked your post"
+                          : notification.type === "reply"
+                            ? "replied to your comment"
+                            : notification.type === "comment"
+                              ? "commented on your post"
+                              : notification.type === "commentLike"
+                                ? notification.parentCommentId
+                                  ? "liked your reply"
+                                  : "liked your comment"
+                                : ""}
+                    </p>
+                  </div>
                 </div>
               ))
             )}
