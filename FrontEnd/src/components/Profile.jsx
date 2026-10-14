@@ -1103,7 +1103,6 @@ export default function Profile({ handleLogout }) {
             ))}
           </>
         )}
-
         {activeTab === "photos" && (
           <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
             {posts
@@ -1147,7 +1146,6 @@ export default function Profile({ handleLogout }) {
               ))}
           </div>
         )}
-
         {activeTab === "videos" && (
           <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
             {posts
@@ -1194,7 +1192,6 @@ export default function Profile({ handleLogout }) {
               ))}
           </div>
         )}
-
         {activeTab === "about" && (
           <div className="bg-white dark:bg-slate-900 text-black dark:text-gray-200 rounded-xl shadow p-6">
             <h2 className="text-2xl font-bold mb-6">About</h2>
