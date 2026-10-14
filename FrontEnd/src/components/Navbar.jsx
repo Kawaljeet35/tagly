@@ -1121,17 +1121,44 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
           }}
         >
           <div className="flex items-center justify-between p-3 border-b bg-teal-600">
-            <div className="flex items-center gap-2">
-              <img
-                src={chat.profilePictureUrl || ProfilePic}
-                alt=""
-                className="w-8 h-8 rounded-full object-cover"
-              />
-
-              <h2 className="font-semibold text-white">{chat.name}</h2>
-            </div>
-            <div className="flex items-center gap-2">
+            {/* Profile picture and name on the left */}
+            <div className="flex items-center gap-2 min-w-0 flex-1">
               <button
+                type="button"
+                disabled={chat.isDeletedUser}
+                onClick={() => {
+                  if (!chat.isDeletedUser && chat.userId) {
+                    navigate(`/users/${chat.userId}`);
+                  }
+                }}
+                aria-label={`View ${chat.name}'s profile`}
+                className="w-8 h-8 flex-shrink-0 rounded-full overflow-hidden p-0 border-0 bg-transparent disabled:cursor-default"
+              >
+                <img
+                  src={chat.profilePictureUrl || ProfilePic}
+                  alt=""
+                  className="w-full h-full rounded-full object-cover"
+                />
+              </button>
+
+              <button
+                type="button"
+                disabled={chat.isDeletedUser}
+                onClick={() => {
+                  if (!chat.isDeletedUser && chat.userId) {
+                    navigate(`/users/${chat.userId}`);
+                  }
+                }}
+                className="font-semibold text-white truncate text-left hover:underline disabled:no-underline disabled:cursor-default"
+              >
+                {chat.name}
+              </button>
+            </div>
+
+            {/* Minimize / maximize and close grouped on the right */}
+            <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+              <button
+                type="button"
                 onClick={() => {
                   setMinimizedChats((prev) =>
                     prev.includes(chat.userId)
@@ -1139,18 +1166,34 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
                       : [...prev, chat.userId],
                   );
                 }}
-                className="text-zinc-100 text-l leading-none hover:text-cyan-200"
+                aria-label={
+                  minimizedChats.includes(chat.userId)
+                    ? "Maximize chat"
+                    : "Minimize chat"
+                }
+                title={
+                  minimizedChats.includes(chat.userId)
+                    ? "Maximize chat"
+                    : "Minimize chat"
+                }
+                className={`flex h-9 w-8 flex-shrink-0 items-center justify-center text-white hover:text-cyan-200 ${
+                  minimizedChats.includes(chat.userId)
+                    ? "text-2xl font-bold"
+                    : "text-base"
+                }`}
               >
-                —
+                {minimizedChats.includes(chat.userId) ? "□" : "—"}
               </button>
 
               <button
+                type="button"
                 onClick={() =>
                   setActiveChats((prev) =>
                     prev.filter((c) => c.userId !== chat.userId),
                   )
                 }
-                className="text-zinc-100 hover:text-red-300"
+                aria-label="Close chat"
+                className="flex h-9 w-6 flex-shrink-0 items-center justify-center text-xl text-zinc-100 hover:text-red-300"
               >
                 ✕
               </button>
