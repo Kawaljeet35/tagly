@@ -7,6 +7,8 @@ public class InboxItemDTO {
 
     private String name;
 
+    private String profilePictureUrl;
+
     private String latestMessage;
 
     private String latestSenderUsername;
@@ -40,6 +42,14 @@ public class InboxItemDTO {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getProfilePictureUrl() {
+        return profilePictureUrl;
+    }
+
+    public void setProfilePictureUrl(String profilePictureUrl) {
+        this.profilePictureUrl = profilePictureUrl;
     }
 
     public String getLatestSenderUsername() {

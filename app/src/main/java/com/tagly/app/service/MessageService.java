@@ -244,6 +244,10 @@ public class MessageService {
                     otherUser.getName()
             );
 
+            dto.setProfilePictureUrl(
+                    otherUser.getProfilePictureUrl()
+            );
+
             dto.setLatestMessage(
                     message.getContent()
             );
@@ -288,4 +292,5 @@ public class MessageService {
 
         return inboxItems;
     }
+
 }

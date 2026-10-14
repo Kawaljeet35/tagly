@@ -245,7 +245,6 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
           ]);
         }
       }
-
       setInboxUsers(Array.isArray(data) ? data : []);
       setPreviousInboxUsers(data);
     } catch (error) {
@@ -862,27 +861,35 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
                 <div
                   key={user.userId}
                   onClick={() => openChat(user)}
-                  className={`p-3 border-b border-gray-200 dark:border-slate-700 cursor-pointer ${
+                  className={`flex items-center gap-3 p-3 border-b border-gray-200 dark:border-slate-700 cursor-pointer ${
                     unreadChats.includes(user.userId)
                       ? "bg-cyan-100 dark:bg-cyan-900/50 hover:bg-cyan-200 dark:hover:bg-cyan-900"
                       : "hover:bg-gray-50 dark:hover:bg-slate-800"
                   }`}
                 >
-                  <p className="font-semibold text-black dark:text-white">
-                    {user.name}
-                  </p>
+                  <img
+                    src={user.profilePictureUrl || ProfilePic}
+                    alt=""
+                    className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                  />
 
-                  <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                    {user.latestMessage
-                      ? user.latestSenderUsername ===
-                        localStorage.getItem("username")
-                        ? `You: ${user.latestMessage}`
-                        : user.latestMessage
-                      : user.latestSenderUsername ===
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-black dark:text-white truncate">
+                      {user.name}
+                    </p>
+
+                    <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                      {user.latestMessage
+                        ? user.latestSenderUsername ===
                           localStorage.getItem("username")
-                        ? "You: Photo"
-                        : `${user.name} sent you a photo`}
-                  </p>
+                          ? `You: ${user.latestMessage}`
+                          : user.latestMessage
+                        : user.latestSenderUsername ===
+                            localStorage.getItem("username")
+                          ? "You: Photo"
+                          : `${user.name} sent you a photo`}
+                    </p>
+                  </div>
                 </div>
               ))
             )}
