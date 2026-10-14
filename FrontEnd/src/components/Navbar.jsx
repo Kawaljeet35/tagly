@@ -752,11 +752,26 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
 
                       return;
                     }
+
                     if (
-                      (notification.type === "like" ||
-                        notification.type === "comment") &&
-                      notification.postId
+                      notification.type === "comment" &&
+                      notification.postId &&
+                      notification.commentId
                     ) {
+                      setShowNotifications(false);
+
+                      const params = new URLSearchParams({
+                        post: notification.postId,
+                        comment: notification.commentId,
+                      });
+
+                      navigate(
+                        `/users/${notification.postOwnerId}?${params.toString()}`,
+                      );
+                      return;
+                    }
+
+                    if (notification.type === "like" && notification.postId) {
                       setShowNotifications(false);
                       navigate(`/profile?post=${notification.postId}`);
                       return;
