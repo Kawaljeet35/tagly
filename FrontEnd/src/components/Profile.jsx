@@ -1766,18 +1766,48 @@ export default function Profile({ handleLogout }) {
                             comment.parentCommentId ? "ml-10" : ""
                           }`}
                         >
-                          <img
-                            src={comment.user?.profilePictureUrl || ProfilePic}
-                            alt=""
-                            className="w-9 h-9 rounded-full object-cover flex-shrink-0"
-                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (comment.user?.id) {
+                                setSelectedPhoto(null);
+                                setShowPhotoComments(false);
+                                window.scrollTo({ top: 0, behavior: "auto" });
+                                navigate(`/users/${comment.user.id}`);
+                              }
+                            }}
+                            aria-label={`View ${comment.user?.name || comment.user?.username}'s profile`}
+                            className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 cursor-pointer p-0 border-0 bg-transparent"
+                          >
+                            <img
+                              src={
+                                comment.user?.profilePictureUrl || ProfilePic
+                              }
+                              alt=""
+                              className="w-full h-full rounded-full object-cover"
+                            />
+                          </button>
 
                           <div className="flex-1 min-w-0 flex justify-between gap-3">
                             <div className="flex-1 min-w-0">
                               <div className="flex items-baseline gap-2">
-                                <p className="font-semibold text-sm text-gray-900 dark:text-gray-300">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (comment.user?.id) {
+                                      setSelectedPhoto(null);
+                                      setShowPhotoComments(false);
+                                      window.scrollTo({
+                                        top: 0,
+                                        behavior: "auto",
+                                      });
+                                      navigate(`/users/${comment.user.id}`);
+                                    }
+                                  }}
+                                  className="font-semibold text-sm text-gray-900 dark:text-gray-300 hover:underline cursor-pointer text-left"
+                                >
                                   {comment.user?.name || comment.user?.username}
-                                </p>
+                                </button>
 
                                 <span className="text-xs text-gray-500 dark:text-gray-400">
                                   {formatCommentTimestamp(comment.createdAt)}
