@@ -661,6 +661,23 @@ export default function Profile({ handleLogout }) {
     ]);
 
     setVideoComments(orderedComments);
+
+    const topLevelCount = topLevelComments.length;
+
+    setSelectedVideo((prev) =>
+      prev?.id === selectedVideo.id
+        ? { ...prev, commentsCount: topLevelCount }
+        : prev,
+    );
+
+    setPosts((prevPosts) =>
+      prevPosts.map((post) =>
+        post.id === selectedVideo.id
+          ? { ...post, commentsCount: topLevelCount }
+          : post,
+      ),
+    );
+
     setShowVideoComments(true);
   };
 
@@ -1045,7 +1062,6 @@ export default function Profile({ handleLogout }) {
         handleLogout={handleLogout}
         profilePictureUrl={currentUser?.profilePictureUrl}
       />
-
       <ProfileTop
         name={user?.name}
         profilePictureUrl={user?.profilePictureUrl}
@@ -1058,7 +1074,6 @@ export default function Profile({ handleLogout }) {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
       />
-
       <div className="max-w-4xl mx-auto mt-3 pb-[10px]">
         {activeTab === "posts" && (
           <>
@@ -1140,7 +1155,13 @@ export default function Profile({ handleLogout }) {
               .map((post) => (
                 <div
                   key={post.id}
-                  onClick={() => setSelectedVideo(post)}
+                  onClick={() => {
+                    setSelectedVideo(post);
+                    setShowVideoComments(false);
+                    setVideoComments([]);
+                    setVideoReplyingTo(null);
+                    setVideoReplyText("");
+                  }}
                   className="group relative aspect-square overflow-hidden rounded-lg cursor-pointer bg-black"
                 >
                   <video
@@ -2084,310 +2105,418 @@ export default function Profile({ handleLogout }) {
       )}
       {selectedVideo && (
         <div
-          className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-6"
-          onClick={() => setSelectedVideo(null)}
+          className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-3 sm:p-6"
+          onClick={() => {
+            setSelectedVideo(null);
+            setShowVideoComments(false);
+          }}
         >
           <div
-            className={
+            className={`relative flex flex-col ${
               showVideoComments
-                ? "relative w-full max-w-6xl h-[85vh] bg-black rounded-lg overflow-hidden flex"
-                : "relative max-w-5xl max-h-[90vh]"
-            }
+                ? "w-full max-w-6xl h-[85vh] max-h-[90vh]"
+                : "w-fit max-w-[92vw] max-h-[90vh]"
+            } bg-white dark:bg-slate-950 border border-gray-200 dark:border-slate-700 rounded-xl shadow-2xl overflow-hidden`}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* VIDEO SECTION */}
-            <div
-              className={
-                showVideoComments
-                  ? "w-1/2 shrink-0 h-full bg-black flex items-center justify-center relative overflow-hidden"
-                  : "relative"
-              }
-            >
-              {/* MAIN VIDEO CLOSE BUTTON */}
+            {/* VIEWER HEADER */}
+            <div className="flex items-center justify-between gap-3 px-4 py-3 bg-white dark:bg-slate-950 border-b border-gray-200 dark:border-slate-700 flex-shrink-0">
               <button
-                onClick={() => setSelectedVideo(null)}
-                className="absolute top-3 right-3 bg-black/60 hover:bg-black/80 text-white rounded-full w-10 h-10 flex items-center justify-center text-xl z-30"
+                type="button"
+                onClick={() => {
+                  if (selectedVideo.userId) {
+                    const authorId = selectedVideo.userId;
+                    setSelectedVideo(null);
+                    setShowVideoComments(false);
+                    window.scrollTo({ top: 0, behavior: "auto" });
+                    navigate(`/users/${authorId}`);
+                  }
+                }}
+                className="flex items-center gap-3 min-w-0 text-left rounded-lg hover:bg-gray-100 dark:hover:bg-slate-800 p-1 transition-colors"
+                aria-label={`View ${selectedVideo.name || selectedVideo.username}'s profile`}
+              >
+                <img
+                  src={selectedVideo.profilePictureUrl || ProfilePic}
+                  alt=""
+                  className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                />
+                <span className="min-w-0">
+                  <span className="block font-semibold text-gray-900 dark:text-gray-100 truncate">
+                    {selectedVideo.name || selectedVideo.username}
+                  </span>
+                  <span className="block text-xs text-gray-500 dark:text-gray-400">
+                    View profile
+                  </span>
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedVideo(null);
+                  setShowVideoComments(false);
+                }}
+                aria-label="Close video viewer"
+                className="w-9 h-9 flex items-center justify-center rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 flex-shrink-0"
               >
                 ✕
               </button>
-              <video
-                src={selectedVideo.mediaUrl}
-                controls
-                autoPlay
-                className={
-                  showVideoComments
-                    ? "max-w-[95%] max-h-[95%] object-contain"
-                    : "max-w-full max-h-[85vh] object-contain rounded-lg"
-                }
-              />
-
-              {/* LIKE + COMMENT CONTROLS */}
-              <div className="absolute bottom-4 left-4 right-4 flex justify-between items-center text-white">
-                <button
-                  onClick={handleVideoLike}
-                  className="flex items-center gap-2 bg-black/60 hover:bg-black/80 px-3 py-2 rounded-lg"
-                >
-                  <span
-                    className={
-                      selectedVideo.likedByCurrentUser
-                        ? "text-red-500"
-                        : "text-white"
-                    }
-                  >
-                    ♥
-                  </span>
-
-                  <span>{selectedVideo.likesCount}</span>
-                </button>
-
-                <button
-                  onClick={fetchVideoComments}
-                  className="flex items-center gap-2 bg-black/60 hover:bg-black/80 px-3 py-2 rounded-lg"
-                >
-                  <span>💬</span>
-                  <span>{selectedVideo.commentsCount}</span>
-                </button>
-              </div>
             </div>
 
-            {/* COMMENTS SECTION */}
-            {showVideoComments && (
-              <div className="w-1/2 shrink-0 h-full bg-white dark:bg-slate-900 text-black dark:text-gray-200 flex flex-col">
-                {/* COMMENTS HEADER */}
-                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-slate-700">
-                  <h3 className="font-semibold text-gray-900 dark:text-gray-300">
-                    Comments
-                  </h3>
+            {/* MIDDLE SECTION: VIDEO AND COMMENTS */}
+            <div
+              className={`flex min-h-0 min-w-0 ${
+                showVideoComments ? "flex-1" : "justify-center"
+              }`}
+            >
+              {/* VIDEO SECTION */}
+              <div
+                className={`relative min-w-0 min-h-0 bg-white dark:bg-slate-950 flex items-center justify-center overflow-hidden ${
+                  showVideoComments
+                    ? "flex-1"
+                    : "w-fit max-w-[92vw] max-h-[calc(90vh-8rem)]"
+                }`}
+              >
+                <video
+                  src={selectedVideo.mediaUrl}
+                  controls
+                  autoPlay
+                  className={`block object-contain ${
+                    showVideoComments
+                      ? "w-full h-full max-w-full max-h-full"
+                      : "max-w-[88vw] max-h-[calc(90vh-10rem)] w-auto h-auto"
+                  }`}
+                />
+              </div>
 
-                  <button
-                    onClick={() => setShowVideoComments(false)}
-                    className="text-gray-500 hover:text-gray-800 text-xl"
-                  >
-                    ✕
-                  </button>
-                </div>
+              {/* COMMENTS SECTION */}
+              {showVideoComments && (
+                <div className="w-1/2 min-w-0 min-h-0 bg-white dark:bg-slate-900 text-black dark:text-gray-200 flex flex-col border-l border-gray-200 dark:border-slate-700">
+                  {/* COMMENTS HEADER */}
+                  <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-slate-700 flex-shrink-0">
+                    <h3 className="font-semibold text-lg text-gray-900 dark:text-gray-100">
+                      Comments
+                    </h3>
 
-                {/* COMMENTS */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                  {videoComments.length === 0 ? (
-                    <p className="text-gray-500 text-sm text-center">
-                      No comments yet.
-                    </p>
-                  ) : (
-                    videoComments.map((comment) => {
-                      if (
-                        comment.parentCommentId &&
-                        hiddenVideoReplies.has(comment.parentCommentId)
-                      ) {
-                        return null;
-                      }
+                    <button
+                      type="button"
+                      onClick={() => setShowVideoComments(false)}
+                      aria-label="Close comments"
+                      className="w-8 h-8 flex items-center justify-center rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-black dark:hover:text-white"
+                    >
+                      ✕
+                    </button>
+                  </div>
 
-                      return (
-                        <div
-                          key={comment.id}
-                          className={`flex gap-3 ${
-                            comment.parentCommentId ? "ml-10" : ""
-                          }`}
-                        >
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (comment.user?.id) {
-                                setSelectedVideo(null);
-                                setShowVideoComments(false);
-                                window.scrollTo({ top: 0, behavior: "auto" });
-                                navigate(`/users/${comment.user.id}`);
-                              }
-                            }}
-                            aria-label={`View ${comment.user?.name || comment.user?.username}'s profile`}
-                            className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 cursor-pointer p-0 border-0 bg-transparent"
+                  {/* SCROLLABLE COMMENTS */}
+                  <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3">
+                    {videoComments.length === 0 ? (
+                      <p className="text-gray-500 dark:text-gray-400 text-sm text-center">
+                        No comments yet.
+                      </p>
+                    ) : (
+                      videoComments.map((comment) => {
+                        if (
+                          comment.parentCommentId &&
+                          hiddenVideoReplies.has(comment.parentCommentId)
+                        ) {
+                          return null;
+                        }
+
+                        return (
+                          <div
+                            key={comment.id}
+                            className={`flex gap-3 ${
+                              comment.parentCommentId ? "ml-10" : ""
+                            }`}
                           >
-                            <img
-                              src={
-                                comment.user?.profilePictureUrl || ProfilePic
-                              }
-                              alt=""
-                              className="w-full h-full rounded-full object-cover"
-                            />
-                          </button>
+                            {/* COMMENTER PROFILE PICTURE */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (comment.user?.id) {
+                                  const authorId = comment.user.id;
+                                  setSelectedVideo(null);
+                                  setShowVideoComments(false);
+                                  window.scrollTo({
+                                    top: 0,
+                                    behavior: "auto",
+                                  });
+                                  navigate(`/users/${authorId}`);
+                                }
+                              }}
+                              aria-label={`View ${
+                                comment.user?.name || comment.user?.username
+                              }'s profile`}
+                              className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 cursor-pointer p-0 border-0 bg-transparent"
+                            >
+                              <img
+                                src={
+                                  comment.user?.profilePictureUrl || ProfilePic
+                                }
+                                alt=""
+                                className="w-full h-full rounded-full object-cover"
+                              />
+                            </button>
 
-                          <div className="flex-1 min-w-0 flex justify-between gap-3">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-baseline gap-2">
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    if (comment.user?.id) {
-                                      setSelectedVideo(null);
-                                      setShowVideoComments(false);
-                                      window.scrollTo({
-                                        top: 0,
-                                        behavior: "auto",
-                                      });
-                                      navigate(`/users/${comment.user.id}`);
-                                    }
-                                  }}
-                                  className="font-semibold text-sm text-gray-900 dark:text-gray-300 hover:underline cursor-pointer text-left"
-                                >
-                                  {comment.user?.name || comment.user?.username}
-                                </button>
-
-                                <span className="text-xs text-gray-500 dark:text-gray-400">
-                                  {formatCommentTimestamp(comment.createdAt)}
-                                </span>
-                              </div>
-
-                              <p className="text-sm text-gray-700 dark:text-gray-200 break-words mt-0.5">
-                                {comment.content}
-                              </p>
-
-                              <div className="flex items-center gap-3 mt-1">
-                                {!comment.parentCommentId && (
-                                  <>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setVideoReplyingTo(
-                                          videoReplyingTo === comment.id
-                                            ? null
-                                            : comment.id,
-                                        );
-                                        setVideoReplyText("");
-                                      }}
-                                      className="text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white"
-                                    >
-                                      Reply
-                                    </button>
-
-                                    {videoComments.some(
-                                      (reply) =>
-                                        reply.parentCommentId === comment.id,
-                                    ) && (
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          toggleVideoReplies(comment.id)
-                                        }
-                                        className="text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white"
-                                      >
-                                        {hiddenVideoReplies.has(comment.id)
-                                          ? `Show replies (${
-                                              videoComments.filter(
-                                                (reply) =>
-                                                  reply.parentCommentId ===
-                                                  comment.id,
-                                              ).length
-                                            })`
-                                          : "Hide replies"}
-                                      </button>
-                                    )}
-                                  </>
-                                )}
-                              </div>
-
-                              {videoReplyingTo === comment.id &&
-                                !comment.parentCommentId && (
-                                  <div className="mt-2 space-y-2">
-                                    <input
-                                      type="text"
-                                      value={videoReplyText}
-                                      onChange={(e) =>
-                                        setVideoReplyText(e.target.value)
+                            <div className="flex-1 min-w-0 flex justify-between gap-3">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-baseline gap-2 flex-wrap">
+                                  {/* COMMENTER NAME */}
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      if (comment.user?.id) {
+                                        const authorId = comment.user.id;
+                                        setSelectedVideo(null);
+                                        setShowVideoComments(false);
+                                        window.scrollTo({
+                                          top: 0,
+                                          behavior: "auto",
+                                        });
+                                        navigate(`/users/${authorId}`);
                                       }
-                                      placeholder="Write a reply..."
-                                      className="w-full border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 rounded-full px-4 py-2 text-sm outline-none"
-                                    />
+                                    }}
+                                    className="font-semibold text-sm text-gray-900 dark:text-gray-200 hover:underline cursor-pointer text-left"
+                                  >
+                                    {comment.user?.name ||
+                                      comment.user?.username}
+                                  </button>
 
-                                    <div className="flex justify-end gap-2">
+                                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                                    {formatCommentTimestamp(comment.createdAt)}
+                                  </span>
+                                </div>
+
+                                <p className="text-sm text-gray-700 dark:text-gray-200 break-words mt-0.5">
+                                  {comment.content}
+                                </p>
+
+                                <div className="flex items-center gap-3 mt-1">
+                                  {!comment.parentCommentId && (
+                                    <>
                                       <button
                                         type="button"
-                                        onClick={() =>
-                                          handleVideoReply(comment.id)
-                                        }
-                                        className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-full text-sm"
+                                        onClick={() => {
+                                          setVideoReplyingTo(
+                                            videoReplyingTo === comment.id
+                                              ? null
+                                              : comment.id,
+                                          );
+                                          setVideoReplyText("");
+                                        }}
+                                        className="text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white"
                                       >
                                         Reply
                                       </button>
 
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          setVideoReplyingTo(null);
-                                          setVideoReplyText("");
-                                        }}
-                                        className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white px-3 py-2 text-sm"
-                                      >
-                                        Cancel
-                                      </button>
+                                      {videoComments.some(
+                                        (reply) =>
+                                          reply.parentCommentId === comment.id,
+                                      ) && (
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            toggleVideoReplies(comment.id)
+                                          }
+                                          className="text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white"
+                                        >
+                                          {hiddenVideoReplies.has(comment.id)
+                                            ? `Show replies (${
+                                                videoComments.filter(
+                                                  (reply) =>
+                                                    reply.parentCommentId ===
+                                                    comment.id,
+                                                ).length
+                                              })`
+                                            : "Hide replies"}
+                                        </button>
+                                      )}
+                                    </>
+                                  )}
+                                </div>
+
+                                {/* REPLY INPUT */}
+                                {videoReplyingTo === comment.id &&
+                                  !comment.parentCommentId && (
+                                    <div className="mt-2 space-y-2">
+                                      <input
+                                        type="text"
+                                        value={videoReplyText}
+                                        onChange={(e) =>
+                                          setVideoReplyText(e.target.value)
+                                        }
+                                        placeholder="Write a reply..."
+                                        className="w-full border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 rounded-full px-4 py-2 text-sm outline-none"
+                                      />
+
+                                      <div className="flex justify-end gap-2">
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            handleVideoReply(comment.id)
+                                          }
+                                          className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-full text-sm"
+                                        >
+                                          Reply
+                                        </button>
+
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setVideoReplyingTo(null);
+                                            setVideoReplyText("");
+                                          }}
+                                          className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white px-3 py-2 text-sm"
+                                        >
+                                          Cancel
+                                        </button>
+                                      </div>
                                     </div>
-                                  </div>
-                                )}
-                            </div>
+                                  )}
+                              </div>
 
-                            <div className="flex flex-col items-center pt-1">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  handleVideoCommentLike(comment.id)
-                                }
-                                className={`hover:scale-110 transition-transform ${
-                                  comment.likedByCurrentUser
-                                    ? "text-red-500"
-                                    : "text-gray-400 hover:text-red-400"
-                                }`}
-                                aria-label="Like comment"
-                              >
-                                <svg
-                                  className="w-5 h-5"
-                                  viewBox="0 0 24 24"
-                                  fill={
-                                    comment.likedByCurrentUser
-                                      ? "currentColor"
-                                      : "none"
+                              {/* COMMENT LIKE */}
+                              <div className="flex flex-col items-center pt-1">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleVideoCommentLike(comment.id)
                                   }
-                                  xmlns="http://www.w3.org/2000/svg"
+                                  className={`hover:scale-110 transition-transform ${
+                                    comment.likedByCurrentUser
+                                      ? "text-red-500"
+                                      : "text-gray-400 hover:text-red-400"
+                                  }`}
+                                  aria-label="Like comment"
                                 >
-                                  <path
-                                    d="M20.8 8.7C20.8 5.7 18.4 3.5 15.5 3.5C13.8 3.5 12.3 4.3 11.4 5.6C10.5 4.3 9 3.5 7.3 3.5C4.4 3.5 2 5.7 2 8.7C2 12.4 5.2 15.1 11.4 20.1C11.6 20.3 11.9 20.3 12.1 20.1C18.3 15.1 20.8 12.4 20.8 8.7Z"
-                                    stroke="currentColor"
-                                    strokeWidth="1.8"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  />
-                                </svg>
-                              </button>
+                                  <svg
+                                    className="w-5 h-5"
+                                    viewBox="0 0 24 24"
+                                    fill={
+                                      comment.likedByCurrentUser
+                                        ? "currentColor"
+                                        : "none"
+                                    }
+                                    xmlns="http://www.w3.org/2000/svg"
+                                  >
+                                    <path
+                                      d="M20.8 8.7C20.8 5.7 18.4 3.5 15.5 3.5C13.8 3.5 12.3 4.3 11.4 5.6C10.5 4.3 9 3.5 7.3 3.5C4.4 3.5 2 5.7 2 8.7C2 12.4 5.2 15.1 11.4 20.1C11.6 20.3 11.9 20.3 12.1 20.1C18.3 15.1 20.8 12.4 20.8 8.7Z"
+                                      stroke="currentColor"
+                                      strokeWidth="1.8"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    />
+                                  </svg>
+                                </button>
 
-                              {comment.likesCount > 0 && (
-                                <span className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                                  {comment.likesCount}
-                                </span>
-                              )}
+                                {comment.likesCount > 0 && (
+                                  <span className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                                    {comment.likesCount}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-                {/* COMMENT INPUT */}
-                <div className="border-t p-3 flex gap-2 flex-shrink-0">
-                  <input
-                    type="text"
-                    value={videoCommentText}
-                    onChange={(e) => setVideoCommentText(e.target.value)}
-                    placeholder="Write a comment..."
-                    className="flex-1 border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-cyan-500"
-                  />
+                        );
+                      })
+                    )}
+                  </div>
 
-                  <button
-                    onClick={handleVideoComment}
-                    className="bg-cyan-600 hover:bg-cyan-700 text-white px-3 py-2 rounded-lg"
-                  >
-                    Post
-                  </button>
+                  {/* COMMENT INPUT */}
+                  <div className="border-t border-gray-200 dark:border-slate-700 p-3 flex gap-2 flex-shrink-0">
+                    <input
+                      type="text"
+                      value={videoCommentText}
+                      onChange={(e) => setVideoCommentText(e.target.value)}
+                      placeholder="Write a comment..."
+                      className="flex-1 min-w-0 border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-cyan-500"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={handleVideoComment}
+                      className="bg-cyan-600 hover:bg-cyan-700 text-white px-3 py-2 rounded-lg flex-shrink-0"
+                    >
+                      Post
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
+
+            {/* VIEWER FOOTER */}
+            <div className="flex items-center justify-between gap-3 px-4 py-2 bg-white dark:bg-slate-950 border-t border-gray-200 dark:border-slate-700 flex-shrink-0">
+              <button
+                type="button"
+                onClick={handleVideoLike}
+                aria-label={
+                  selectedVideo.likedByCurrentUser
+                    ? "Unlike video"
+                    : "Like video"
+                }
+                className="group flex items-center gap-2 rounded-full px-3 py-2 text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+              >
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 dark:bg-slate-800 group-hover:bg-gray-200 dark:group-hover:bg-slate-700 transition-colors">
+                  <svg
+                    className={`h-5 w-5 ${
+                      selectedVideo.likedByCurrentUser
+                        ? "text-red-500"
+                        : "text-gray-500 dark:text-gray-300"
+                    }`}
+                    viewBox="0 0 24 24"
+                    fill={
+                      selectedVideo.likedByCurrentUser ? "currentColor" : "none"
+                    }
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M20.8 8.7C20.8 5.7 18.4 3.5 15.5 3.5C13.8 3.5 12.3 4.3 11.4 5.6C10.5 4.3 9 3.5 7.3 3.5C4.4 3.5 2 5.7 2 8.7C2 12.4 5.2 15.1 11.4 20.1C11.6 20.3 11.9 20.3 12.1 20.1C18.3 15.1 20.8 12.4 20.8 8.7Z" />
+                  </svg>
+                </span>
+
+                <span className="flex flex-col items-start">
+                  <span className="text-sm font-medium">Like</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    {selectedVideo.likesCount}{" "}
+                    {selectedVideo.likesCount === 1 ? "like" : "likes"}
+                  </span>
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={fetchVideoComments}
+                aria-label="View video comments"
+                className="group flex items-center gap-2 rounded-full px-3 py-2 text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+              >
+                <span className="flex flex-col items-end">
+                  <span className="text-sm font-medium">Comments</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    {selectedVideo.commentsCount}{" "}
+                    {selectedVideo.commentsCount === 1 ? "comment" : "comments"}
+                  </span>
+                </span>
+
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 dark:bg-slate-800 group-hover:bg-gray-200 dark:group-hover:bg-slate-700 transition-colors">
+                  <svg
+                    className="h-5 w-5 text-gray-500 dark:text-gray-300"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8A8.5 8.5 0 0 1 8.7 3.9a8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8v.5Z" />
+                  </svg>
+                </span>
+              </button>
+            </div>
           </div>
         </div>
       )}
