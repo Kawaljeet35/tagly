@@ -45,7 +45,11 @@ public class FriendRequestController {
     @PutMapping("/accept/{requestId}")
     public ResponseEntity<String> acceptRequest(@PathVariable Long requestId) {
 
-        friendRequestService.acceptRequest(requestId);
+        String username = SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getName();
+
+        friendRequestService.acceptRequest(requestId, username);
 
         return ResponseEntity.ok("Friend request accepted");
     }
@@ -55,7 +59,11 @@ public class FriendRequestController {
             @PathVariable Long requestId
     ) {
 
-        friendRequestService.declineRequest(requestId);
+        String username = SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getName();
+
+        friendRequestService.declineRequest(requestId, username);
 
         return ResponseEntity.ok("Friend request declined");
     }
@@ -76,11 +84,15 @@ public class FriendRequestController {
     public ResponseEntity<List<FriendRequest>> getFriendsByUserId(
             @PathVariable Long userId
     ) {
+        String username = SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getName();
 
         return ResponseEntity.ok(
-                friendRequestService.getFriendsByUserId(userId)
+                friendRequestService.getFriendsByUserId(userId, username)
         );
     }
+
 
     @GetMapping("/status/{userId}")
     public ResponseEntity<String> getFriendshipStatus(
@@ -104,7 +116,11 @@ public class FriendRequestController {
             @PathVariable Long friendshipId
     ) {
 
-        friendRequestService.unfriend(friendshipId);
+        String username = SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getName();
+
+        friendRequestService.unfriend(friendshipId, username);
 
         return ResponseEntity.ok("Friend removed");
     }

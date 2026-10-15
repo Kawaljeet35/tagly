@@ -4,7 +4,9 @@ import com.tagly.app.entity.FriendRequest;
 import com.tagly.app.entity.User;
 import com.tagly.app.repository.FriendRequestRepository;
 import com.tagly.app.repository.UserRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -29,6 +31,12 @@ public class FriendRequestService {
 
         User receiver = userRepository.findById(receiverId)
                 .orElseThrow(() -> new RuntimeException("Receiver not found"));
+
+        if (sender.getId().equals(receiver.getId())) {
+            throw new IllegalArgumentException(
+                    "You cannot send a friend request to yourself"
+            );
+        }
 
         if ("DEACTIVATED".equals(receiver.getAccountStatus())) {
             throw new IllegalArgumentException("Receiver is unavailable");
@@ -69,10 +77,26 @@ public class FriendRequestService {
                 .toList();
     }
 
-    public void acceptRequest(Long requestId) {
+    public void acceptRequest(Long requestId, String currentUsername) {
 
         FriendRequest request = friendRequestRepository.findById(requestId)
-                .orElseThrow(() -> new RuntimeException("Request not found"));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Request not found"
+                ));
+
+        if (!request.getReceiver().getUsername().equals(currentUsername)) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "You are not authorized to accept this request"
+            );
+        }
+
+        if (!"PENDING".equals(request.getStatus())) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Request is not pending"
+            );
+        }
 
         if ("DEACTIVATED".equals(request.getSender().getAccountStatus())
                 || "DEACTIVATED".equals(request.getReceiver().getAccountStatus())) {
@@ -80,17 +104,28 @@ public class FriendRequestService {
         }
 
         request.setStatus("ACCEPTED");
-
         friendRequestRepository.save(request);
     }
 
-    public void declineRequest(Long requestId) {
+    public void declineRequest(Long requestId, String currentUsername) {
 
         FriendRequest request = friendRequestRepository.findById(requestId)
-                .orElseThrow(() -> new RuntimeException("Request not found"));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Request not found"
+                ));
 
-        if (!request.getStatus().equals("PENDING")) {
-            throw new RuntimeException("Request is not pending");
+        if (!request.getReceiver().getUsername().equals(currentUsername)) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "You are not authorized to decline this request"
+            );
+        }
+
+        if (!"PENDING".equals(request.getStatus())) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Request is not pending"
+            );
         }
 
         friendRequestRepository.delete(request);
@@ -121,10 +156,30 @@ public class FriendRequestService {
                 .toList();
     }
 
-    public List<FriendRequest> getFriendsByUserId(Long userId) {
-
+    public List<FriendRequest> getFriendsByUserId(
+            Long userId,
+            String currentUsername
+    ) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
+        User currentUser = userRepository.findByUsername(currentUsername)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Users can always view their own friends list.
+        if (!currentUser.getId().equals(userId)) {
+            String friendshipStatus = getFriendshipStatus(
+                    currentUsername,
+                    userId
+            );
+
+            if (!"ACCEPTED".equals(friendshipStatus)) {
+                throw new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.FORBIDDEN,
+                        "You must be friends to view this user's friends list"
+                );
+            }
+        }
 
         List<FriendRequest> sent =
                 friendRequestRepository.findBySenderAndStatus(user, "ACCEPTED");
@@ -190,19 +245,26 @@ public class FriendRequestService {
         return "NONE";
     }
 
-    public void unfriend(Long friendshipId) {
+    public void unfriend(Long friendshipId, String currentUsername) {
 
-        FriendRequest friendship =
-                friendRequestRepository
-                        .findByIdAndStatus(
-                                friendshipId,
-                                "ACCEPTED"
-                        )
-                        .orElseThrow(() ->
-                                new RuntimeException(
-                                        "Friendship not found"
-                                )
-                        );
+        FriendRequest friendship = friendRequestRepository
+                .findByIdAndStatus(friendshipId, "ACCEPTED")
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Friendship not found"
+                ));
+
+        boolean isSender = friendship.getSender()
+                .getUsername().equals(currentUsername);
+
+        boolean isReceiver = friendship.getReceiver()
+                .getUsername().equals(currentUsername);
+
+        if (!isSender && !isReceiver) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "You are not authorized to remove this friendship"
+            );
+        }
 
         friendRequestRepository.delete(friendship);
     }

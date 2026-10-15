@@ -24,6 +24,23 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(response);
     }
 
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ApiResponse> handleRuntimeException(RuntimeException ex) {
+        int status = 400;
+
+        if (ex instanceof org.springframework.web.server.ResponseStatusException responseStatusException) {
+            status = responseStatusException.getStatusCode().value();
+        }
+
+        ApiResponse response = new ApiResponse(
+                ex.getMessage(),
+                status,
+                LocalDateTime.now().toString()
+        );
+
+        return ResponseEntity.status(status).body(response);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidationErrors(MethodArgumentNotValidException ex) {
 
