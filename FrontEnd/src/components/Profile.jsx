@@ -13,6 +13,7 @@ export default function Profile({ handleLogout }) {
   const [posts, setPosts] = useState([]);
   const [activeTab, setActiveTab] = useState("posts");
   const [friends, setFriends] = useState([]);
+  const [friendsAccessDenied, setFriendsAccessDenied] = useState(false);
   const [requests, setRequests] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [myFriends, setMyFriends] = useState([]);
@@ -168,11 +169,23 @@ export default function Profile({ handleLogout }) {
         },
       );
 
+      if (response.status === 403) {
+        setFriendsAccessDenied(true);
+        setFriends([]);
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch friends: ${response.status}`);
+      }
+
       const data = await response.json();
 
-      setFriends(data);
+      setFriendsAccessDenied(false);
+      setFriends(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error(error);
+      console.error("Error fetching friends:", error);
+      setFriends([]);
     }
   };
 
@@ -1513,7 +1526,12 @@ export default function Profile({ handleLogout }) {
               </div>
 
               <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {friends.length === 0 ? (
+                {friendsAccessDenied ? (
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">
+                    You can only view this person's friends list when you're
+                    friends with them.
+                  </p>
+                ) : friends.length === 0 ? (
                   <p className="text-gray-500 dark:text-gray-400 text-sm">
                     You don't have any friends yet.
                   </p>
