@@ -37,13 +37,14 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
   const [previousNotificationCount, setPreviousNotificationCount] = useState(0);
   const [activeChats, setActiveChats] = useState([]);
   const [minimizedChats, setMinimizedChats] = useState([]);
+  const [activeMobileChatId, setActiveMobileChatId] = useState(null);
   const [searchText, setSearchText] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   const [darkMode, setDarkMode] = useState(
     localStorage.getItem("darkMode") === "true",
   );
-
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showDisplaySettings, setShowDisplaySettings] = useState(false);
 
   const navigate = useNavigate();
@@ -253,6 +254,8 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
   };
 
   const openChat = async (user) => {
+    setActiveMobileChatId(user.userId);
+    setMinimizedChats((prev) => prev.filter((id) => id !== user.userId));
     const headers = {
       Authorization: `Bearer ${localStorage.getItem("token")}`,
     };
@@ -441,16 +444,20 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
   }, [darkMode]);
 
   return (
-    <nav className="fixed top-0 w-full bg-white dark:bg-slate-950 flex items-center px-2 py-1 shadow z-10">
+    <nav className="fixed top-0 left-0 w-full bg-white dark:bg-slate-950 flex items-center gap-2 px-2 py-1 shadow z-10">
       <Link
         to="/"
-        className="flex items-center py-2 px-4 gap-2 hover:scale-110 flex-shrink-0"
+        className="flex items-center py-2 px-2 sm:px-4 gap-2 hover:scale-105 flex-shrink-0"
       >
         <img src={CircularTaglyLogo} alt="Tagly Logo" className="w-8" />
-        <img src={TaglyLogo} alt="Tagly Main Logo" className="w-20" />
+        <img
+          src={TaglyLogo}
+          alt="Tagly Main Logo"
+          className="hidden sm:block w-20"
+        />
       </Link>
 
-      <div className="relative">
+      <div className="relative min-w-0 flex-1 md:flex-none md:w-40 lg:w-64">
         <input
           name="search"
           type="text"
@@ -460,7 +467,7 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
             setSearchText(e.target.value);
             searchUsers(e.target.value);
           }}
-          className="input-default rounded-full px-2 py-1 pl-10 bg-stone-100 dark:bg-slate-800 border-none text-lg text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+          className="input-default w-full rounded-full px-2 py-1 pl-10 bg-stone-100 dark:bg-slate-800 border-none text-lg text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
         />
 
         <svg
@@ -518,7 +525,119 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
           </div>
         )}
       </div>
-      <div className="justify-center items-center ml-48 space-x-4 hidden lg:flex">
+      {/* Mobile navigation menu */}
+      <div className="relative ml-2 flex-shrink-0 md:hidden">
+        <button
+          type="button"
+          onClick={() => setShowMobileMenu((prev) => !prev)}
+          aria-label="Open navigation menu"
+          aria-expanded={showMobileMenu}
+          className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-stone-100 dark:hover:bg-slate-800"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            className="h-6 w-6 text-gray-700 dark:text-gray-200"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="5" r="2" />
+            <circle cx="12" cy="12" r="2" />
+            <circle cx="12" cy="19" r="2" />
+          </svg>
+        </button>
+
+        {showMobileMenu && (
+          <div className="absolute right-0 top-11 z-50 w-56 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900">
+            <Link
+              to="/"
+              onClick={() => {
+                setSelectedPage("Home");
+                setShowMobileMenu(false);
+              }}
+              className="flex items-center gap-3 px-4 py-3 text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-slate-800"
+            >
+              Home
+            </Link>
+
+            <Link
+              to="/profile"
+              onClick={() => {
+                setSelectedPage("Profile");
+                setShowMobileMenu(false);
+              }}
+              className="flex items-center gap-3 px-4 py-3 text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-slate-800"
+            >
+              Profile
+            </Link>
+
+            <Link
+              to="/discover"
+              onClick={() => {
+                setSelectedPage("Discover");
+                setShowMobileMenu(false);
+              }}
+              className="flex items-center gap-3 px-4 py-3 text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-slate-800"
+            >
+              Discover
+            </Link>
+
+            <button
+              type="button"
+              onClick={() => {
+                setShowNotifications((prev) => !prev);
+                setShowMessages(false);
+                setShowMobileMenu(false);
+                setHasSeenNotifications(true);
+                localStorage.setItem("hasSeenNotifications", "true");
+              }}
+              className="flex w-full items-center justify-between px-4 py-3 text-left text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-slate-800"
+            >
+              <span>Notifications</span>
+              {pendingRequests.length +
+                likeNotifications.length +
+                commentNotifications.length +
+                commentLikeNotifications.length >
+                0 && (
+                <span className="rounded-full bg-red-500 px-2 py-0.5 text-xs text-white">
+                  {pendingRequests.length +
+                    likeNotifications.length +
+                    commentNotifications.length +
+                    commentLikeNotifications.length}
+                </span>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setShowMessages((prev) => !prev);
+                setShowNotifications(false);
+                setShowMobileMenu(false);
+              }}
+              className="flex w-full items-center justify-between px-4 py-3 text-left text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-slate-800"
+            >
+              <span>Messages</span>
+              {unreadChats.length > 0 && (
+                <span className="rounded-full bg-red-500 px-2 py-0.5 text-xs text-white">
+                  {unreadChats.length}
+                </span>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setShowMobileMenu(false);
+                handlePopUp();
+              }}
+              className="w-full px-4 py-3 text-left text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-slate-800"
+            >
+              Account settings
+            </button>
+          </div>
+        )}
+      </div>
+      <div className="hidden md:flex items-center justify-center gap-3 lg:gap-6 mx-auto">
         <Link
           to="/"
           onMouseEnter={(e) => showTooltip("Home", e)}
@@ -645,7 +764,7 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
         </Link>
       </div>
 
-      <div className="flex space-x-4 ml-auto mr-4">
+      <div className="hidden md:flex items-center gap-3 lg:gap-5 ml-auto mr-2 flex-shrink-0">
         <button
           onClick={() => {
             setShowNotifications(!showNotifications);
@@ -1142,103 +1261,156 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
         </div>
       )}
 
-      {activeChats.map((chat, index) => (
-        <div
-          key={chat.userId}
-          className="fixed bottom-4 bg-white border shadow-xl rounded-xl z-50 w-80"
-          style={{
-            right: `${16 + index * 340}px`,
-          }}
-        >
-          <div className="flex items-center justify-between p-3 border-b bg-teal-600">
-            {/* Profile picture and name on the left */}
-            <div className="flex items-center gap-2 min-w-0 flex-1">
-              <button
-                type="button"
-                disabled={chat.isDeletedUser}
-                onClick={() => {
-                  if (!chat.isDeletedUser && chat.userId) {
-                    navigate(`/users/${chat.userId}`);
+      {activeChats.map((chat, index) => {
+        const isMobileSelected = activeMobileChatId === chat.userId;
+
+        return (
+          <div
+            key={chat.userId}
+            className={`fixed bottom-4 bg-white border shadow-xl rounded-xl z-50 w-[calc(100vw-1rem)] max-w-80 md:w-80 ${
+              isMobileSelected
+                ? "block bottom-16 md:bottom-4"
+                : "hidden md:block"
+            }`}
+            style={{
+              right: window.innerWidth >= 768 ? `${16 + index * 340}px` : "8px",
+            }}
+          >
+            <div className="flex items-center justify-between p-3 border-b bg-teal-600">
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <button
+                  type="button"
+                  disabled={chat.isDeletedUser}
+                  onClick={() => {
+                    if (!chat.isDeletedUser && chat.userId) {
+                      navigate(`/users/${chat.userId}`);
+                    }
+                  }}
+                  aria-label={`View ${chat.name}'s profile`}
+                  className="w-8 h-8 flex-shrink-0 rounded-full overflow-hidden p-0 border-0 bg-transparent disabled:cursor-default"
+                >
+                  <img
+                    src={chat.profilePictureUrl || ProfilePic}
+                    alt=""
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                </button>
+
+                <button
+                  type="button"
+                  disabled={chat.isDeletedUser}
+                  onClick={() => {
+                    if (!chat.isDeletedUser && chat.userId) {
+                      navigate(`/users/${chat.userId}`);
+                    }
+                  }}
+                  className="font-semibold text-white truncate text-left hover:underline disabled:no-underline disabled:cursor-default"
+                >
+                  {chat.name}
+                </button>
+              </div>
+
+              <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMinimizedChats((prev) =>
+                      prev.includes(chat.userId)
+                        ? prev.filter((id) => id !== chat.userId)
+                        : [...prev, chat.userId],
+                    );
+
+                    if (window.innerWidth < 768) {
+                      setActiveMobileChatId(null);
+                    }
+                  }}
+                  aria-label={
+                    minimizedChats.includes(chat.userId)
+                      ? "Maximize chat"
+                      : "Minimize chat"
                   }
+                  title={
+                    minimizedChats.includes(chat.userId)
+                      ? "Maximize chat"
+                      : "Minimize chat"
+                  }
+                  className={`flex h-9 w-8 flex-shrink-0 items-center justify-center text-white hover:text-cyan-200 ${
+                    minimizedChats.includes(chat.userId)
+                      ? "text-2xl font-bold"
+                      : "text-base"
+                  }`}
+                >
+                  {minimizedChats.includes(chat.userId) ? "□" : "—"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveChats((prev) =>
+                      prev.filter((c) => c.userId !== chat.userId),
+                    );
+                    setMinimizedChats((prev) =>
+                      prev.filter((id) => id !== chat.userId),
+                    );
+
+                    if (activeMobileChatId === chat.userId) {
+                      setActiveMobileChatId(null);
+                    }
+                  }}
+                  aria-label="Close chat"
+                  className="flex h-9 w-6 flex-shrink-0 items-center justify-center text-xl text-zinc-100 hover:text-red-300"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {!minimizedChats.includes(chat.userId) && (
+              <ChatWindow
+                userId={chat.userId}
+                userName={chat.name}
+                isDeletedUser={chat.isDeletedUser}
+              />
+            )}
+          </div>
+        );
+      })}
+
+      {/* Mobile conversation switcher */}
+      {activeChats.length > 0 && (
+        <div className="fixed bottom-2 left-2 right-2 z-[60] flex gap-2 overflow-x-auto md:hidden">
+          {activeChats.map((chat) => {
+            const isSelected = activeMobileChatId === chat.userId;
+
+            return (
+              <button
+                key={chat.userId}
+                type="button"
+                onClick={() => {
+                  setActiveMobileChatId(chat.userId);
+                  setMinimizedChats((prev) =>
+                    prev.filter((id) => id !== chat.userId),
+                  );
                 }}
-                aria-label={`View ${chat.name}'s profile`}
-                className="w-8 h-8 flex-shrink-0 rounded-full overflow-hidden p-0 border-0 bg-transparent disabled:cursor-default"
+                className={`flex min-w-0 max-w-40 flex-shrink-0 items-center gap-2 rounded-full border px-3 py-2 shadow ${
+                  isSelected
+                    ? "border-teal-700 bg-teal-700 text-white"
+                    : "border-gray-300 bg-white text-gray-800"
+                }`}
               >
                 <img
                   src={chat.profilePictureUrl || ProfilePic}
                   alt=""
-                  className="w-full h-full rounded-full object-cover"
+                  className="h-6 w-6 flex-shrink-0 rounded-full object-cover"
                 />
+                <span className="truncate text-sm font-medium">
+                  {chat.name}
+                </span>
               </button>
-
-              <button
-                type="button"
-                disabled={chat.isDeletedUser}
-                onClick={() => {
-                  if (!chat.isDeletedUser && chat.userId) {
-                    navigate(`/users/${chat.userId}`);
-                  }
-                }}
-                className="font-semibold text-white truncate text-left hover:underline disabled:no-underline disabled:cursor-default"
-              >
-                {chat.name}
-              </button>
-            </div>
-
-            {/* Minimize / maximize and close grouped on the right */}
-            <div className="flex items-center gap-1 flex-shrink-0 ml-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setMinimizedChats((prev) =>
-                    prev.includes(chat.userId)
-                      ? prev.filter((id) => id !== chat.userId)
-                      : [...prev, chat.userId],
-                  );
-                }}
-                aria-label={
-                  minimizedChats.includes(chat.userId)
-                    ? "Maximize chat"
-                    : "Minimize chat"
-                }
-                title={
-                  minimizedChats.includes(chat.userId)
-                    ? "Maximize chat"
-                    : "Minimize chat"
-                }
-                className={`flex h-9 w-8 flex-shrink-0 items-center justify-center text-white hover:text-cyan-200 ${
-                  minimizedChats.includes(chat.userId)
-                    ? "text-2xl font-bold"
-                    : "text-base"
-                }`}
-              >
-                {minimizedChats.includes(chat.userId) ? "□" : "—"}
-              </button>
-
-              <button
-                type="button"
-                onClick={() =>
-                  setActiveChats((prev) =>
-                    prev.filter((c) => c.userId !== chat.userId),
-                  )
-                }
-                aria-label="Close chat"
-                className="flex h-9 w-6 flex-shrink-0 items-center justify-center text-xl text-zinc-100 hover:text-red-300"
-              >
-                ✕
-              </button>
-            </div>
-          </div>
-
-          {!minimizedChats.includes(chat.userId) && (
-            <ChatWindow
-              userId={chat.userId}
-              userName={chat.name}
-              isDeletedUser={chat.isDeletedUser}
-            />
-          )}
+            );
+          })}
         </div>
-      ))}
+      )}
     </nav>
   );
 }

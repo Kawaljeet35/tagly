@@ -308,7 +308,7 @@ export default function ProfileTop({
   return (
     <>
       <div
-        className="w-[80%] max-w-4xl bg-cover bg-center h-[400px] rounded-lg relative left-1/2 transform -translate-x-1/2"
+        className="w-[calc(100%-1rem)] sm:w-[90%] max-w-4xl h-52 sm:h-72 md:h-[400px] bg-cover bg-center rounded-lg relative mx-auto"
         style={{
           backgroundImage: `url("${
             coverPhotoUrl || "https://wallpapercave.com/wp/wp3246092.jpg"
@@ -320,21 +320,21 @@ export default function ProfileTop({
             <img
               src={profilePictureUrl || pic}
               alt="Profile Pic"
-              className="h-44 w-44 absolute object-cover bg-red-800 rounded-full bottom-0 transform translate-y-1/2 translate-x-1/4 border-[4px] border-white overflow-hidden"
+              className="absolute bottom-0 left-4 sm:left-6 h-24 w-24 sm:h-32 sm:w-32 md:h-44 md:w-44 translate-y-1/2 rounded-full border-4 border-white bg-red-800 object-cover overflow-hidden"
             />
           </button>
         ) : (
           <img
             src={profilePictureUrl || pic}
             alt="Profile Pic"
-            className="h-44 w-44 absolute object-cover bg-red-800 rounded-full bottom-0 transform translate-y-1/2 translate-x-1/4 border-[4px] border-white overflow-hidden"
+            className="absolute bottom-0 left-4 sm:left-6 h-24 w-24 sm:h-32 sm:w-32 md:h-44 md:w-44 translate-y-1/2 rounded-full border-4 border-white bg-red-800 object-cover overflow-hidden"
           />
         )}
 
         {isOwnProfile && (
           <button
             onClick={() => setCoverPopupVisible(true)}
-            className="absolute right-8 bottom-4 flex gap-2 items-center bg-stone-100 hover:bg-stone-200 py-2 px-4 rounded-md"
+            className="absolute right-2 bottom-2 sm:right-4 sm:bottom-3 md:right-8 md:bottom-4 flex gap-1 sm:gap-2 items-center bg-stone-100 hover:bg-stone-200 py-1.5 px-2 sm:py-2 sm:px-3 md:px-4 text-xs sm:text-sm md:text-base rounded-md"
           >
             <svg
               viewBox="0 -2 32 32"
@@ -386,7 +386,7 @@ export default function ProfileTop({
           </button>
         )}
 
-        <div className="flex items-center justify-between absolute -bottom-[72px] left-[225px] right-0">
+        <div className="flex items-center justify-between absolute -bottom-[72px] left-[120px] sm:left-[160px] md:left-[225px] right-0">
           <span className="font-bold text-2xl text-gray-900 dark:text-gray-300">
             {name}
           </span>
@@ -425,11 +425,11 @@ export default function ProfileTop({
           </div>
         </div>
       </div>
-      <hr className="w-[80%] max-w-4xl border-t-1 border-gray-400 mx-auto mt-[108px]"></hr>
-      <div className="w-[80%] max-w-4xl mx-auto flex justify-between items-center mt-2 bg-white dark:bg-slate-900 rounded-xl shadow-sm px-2 py-2">
-        <ul className="flex items-center justify-start gap-2 text-gray-900 dark:text-gray-300">
+      <hr className="w-[calc(100%-1rem)] sm:w-[90%] max-w-4xl border-t-1 border-gray-400 mx-auto mt-[108px]"></hr>
+      <div className="w-[calc(100%-1rem)] sm:w-[90%] max-w-4xl mx-auto flex justify-between items-center mt-2 bg-white dark:bg-slate-900 rounded-xl shadow-sm px-2 py-2">
+        <ul className="flex w-full min-w-0 items-center justify-start gap-1 sm:gap-2 overflow-x-auto whitespace-nowrap text-gray-900 dark:text-gray-300">
           <li
-            className={`py-2 px-4 rounded-md ${
+            className={`py-2 px-4 shrink-0 rounded-md ${
               activeTab === "posts"
                 ? "bg-gray-200 font-semibold text-gray-900"
                 : "hover:bg-gray-300 dark:hover:bg-slate-700"
@@ -439,7 +439,7 @@ export default function ProfileTop({
           </li>
 
           <li
-            className={`py-2 px-4 rounded-md ${
+            className={`py-2 px-4 shrink-0 rounded-md ${
               activeTab === "about"
                 ? "bg-gray-200 font-semibold text-gray-900"
                 : "hover:bg-gray-300 dark:hover:bg-slate-700"
@@ -449,7 +449,7 @@ export default function ProfileTop({
           </li>
 
           <li
-            className={`py-2 px-4 rounded-md ${
+            className={`py-2 px-4 shrink-0 rounded-md ${
               activeTab === "friends"
                 ? "bg-gray-200 font-semibold text-gray-900"
                 : "hover:bg-gray-300 dark:hover:bg-slate-700"
@@ -459,7 +459,7 @@ export default function ProfileTop({
           </li>
 
           <li
-            className={`py-2 px-4 rounded-md ${
+            className={`py-2 px-4 shrink-0 rounded-md ${
               activeTab === "photos"
                 ? "bg-gray-200 font-semibold text-gray-900"
                 : "hover:bg-gray-300 dark:hover:bg-slate-700"
@@ -469,7 +469,7 @@ export default function ProfileTop({
           </li>
 
           <li
-            className={`py-2 px-4 rounded-md ${
+            className={`py-2 px-4 shrink-0 rounded-md ${
               activeTab === "videos"
                 ? "bg-gray-200 font-semibold text-gray-900"
                 : "hover:bg-gray-300 dark:hover:bg-slate-700"
@@ -478,7 +478,7 @@ export default function ProfileTop({
             <button onClick={() => setActiveTab("videos")}>Videos</button>
           </li>
 
-          <li className="hover:bg-gray-300 dark:hover:bg-slate-700 py-2 px-4 rounded-md">
+          <li className="hover:bg-gray-300 dark:hover:bg-slate-700 py-2 px-4 shrink-0 rounded-md">
             <a href="#">More</a>
           </li>
         </ul>
