@@ -323,7 +323,7 @@ export default function DiscoverPage({ handleLogout }) {
       />
 
       <div className="pt-[68px] pb-[10px] px-4 bg-stone-100 dark:bg-slate-800 min-h-screen">
-        <div className="grid grid-cols-3 md:grid-cols-4 gap-3 max-w-6xl mx-auto">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-w-6xl mx-auto">
           {videos.map((post) => (
             <div
               key={post.id}

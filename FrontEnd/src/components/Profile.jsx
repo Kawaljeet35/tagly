@@ -1087,7 +1087,7 @@ export default function Profile({ handleLogout }) {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
       />
-      <div className="max-w-4xl mx-auto mt-3 pb-[10px]">
+      <div className="w-[calc(100%-1rem)] sm:w-[90%] max-w-4xl mx-auto mt-3 pb-[10px]">
         {activeTab === "posts" && (
           <>
             {posts.map((post) => (
@@ -1117,7 +1117,7 @@ export default function Profile({ handleLogout }) {
           </>
         )}
         {activeTab === "photos" && (
-          <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
             {posts
               .filter((post) => post.mediaType === "image")
               .map((post) => (
@@ -1160,7 +1160,7 @@ export default function Profile({ handleLogout }) {
           </div>
         )}
         {activeTab === "videos" && (
-          <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
             {posts
               .filter((post) => post.mediaType === "video")
               .map((post) => (
@@ -1455,7 +1455,7 @@ export default function Profile({ handleLogout }) {
                       requests.map((request) => (
                         <div
                           key={request.id}
-                          className="flex items-center gap-4 py-4 border-b border-gray-100 dark:border-slate-700 last:border-b-0"
+                          className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 py-4 border-b border-gray-100 dark:border-slate-700 last:border-b-0"
                         >
                           <img
                             src={request.sender.profilePictureUrl || ProfilePic}
@@ -1463,7 +1463,7 @@ export default function Profile({ handleLogout }) {
                             className="w-14 h-14 rounded-full object-cover"
                           />
 
-                          <div className="flex-1">
+                          <div className="flex-1 min-w-0">
                             <p className="font-semibold text-gray-900 dark:text-gray-300">
                               {request.sender.name}
                             </p>
@@ -1473,17 +1473,17 @@ export default function Profile({ handleLogout }) {
                             </p>
                           </div>
 
-                          <div className="flex gap-2">
+                          <div className="flex w-full sm:w-auto gap-2">
                             <button
                               onClick={() => acceptRequest(request.id)}
-                              className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg"
+                              className="flex-1 sm:flex-none bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg"
                             >
                               Accept
                             </button>
 
                             <button
                               onClick={() => declineRequest(request.id)}
-                              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg"
+                              className="flex-1 sm:flex-none bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg"
                             >
                               Decline
                             </button>
@@ -1525,7 +1525,7 @@ export default function Profile({ handleLogout }) {
                 </div>
               </div>
 
-              <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="p-4 sm:p-6 grid grid-cols-1 min-[480px]:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                 {friendsAccessDenied ? (
                   <p className="text-gray-500 dark:text-gray-400 text-sm">
                     You can only view this person's friends list when you're
