@@ -254,8 +254,24 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
   };
 
   const openChat = async (user) => {
-    setActiveMobileChatId(user.userId);
-    setMinimizedChats((prev) => prev.filter((id) => id !== user.userId));
+    if (window.innerWidth < 768) {
+      setMinimizedChats((prev) => {
+        const next = new Set(prev);
+
+        if (
+          activeMobileChatId &&
+          activeMobileChatId !== user.userId &&
+          activeChats.some((chat) => chat.userId === activeMobileChatId)
+        ) {
+          next.add(activeMobileChatId);
+        }
+
+        next.delete(user.userId);
+        return [...next];
+      });
+
+      setActiveMobileChatId(user.userId);
+    }
     const headers = {
       Authorization: `Bearer ${localStorage.getItem("token")}`,
     };
@@ -628,7 +644,7 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
               type="button"
               onClick={() => {
                 setShowMobileMenu(false);
-                handlePopUp();
+                navigate("/account-settings");
               }}
               className="w-full px-4 py-3 text-left text-gray-800 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-slate-800"
             >
@@ -637,6 +653,189 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
           </div>
         )}
       </div>
+      {showNotifications && (
+        <div className="fixed left-1/2 top-14 z-50 max-h-[70vh] w-[calc(100%-1rem)] max-w-md -translate-x-1/2 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900 md:hidden">
+          <div className="flex items-center justify-between border-b border-gray-200 p-3 dark:border-slate-700">
+            <span className="font-semibold text-black dark:text-white">
+              Notifications
+            </span>
+
+            <button
+              type="button"
+              onClick={() => setShowNotifications(false)}
+              aria-label="Close notifications"
+              className="flex h-8 w-8 items-center justify-center rounded-full text-xl text-gray-500 hover:bg-gray-100 hover:text-black dark:text-gray-300 dark:hover:bg-slate-800 dark:hover:text-white"
+            >
+              ×
+            </button>
+          </div>
+
+          {allNotifications.length === 0 ? (
+            <p className="p-4 text-sm text-gray-500 dark:text-gray-400">
+              No notifications
+            </p>
+          ) : (
+            allNotifications.map((notification) => (
+              <div
+                key={notification.id}
+                onClick={() => {
+                  setShowNotifications(false);
+
+                  if (
+                    notification.type === "commentLike" &&
+                    notification.postOwnerId &&
+                    notification.postId &&
+                    notification.commentId
+                  ) {
+                    const params = new URLSearchParams({
+                      post: notification.postId,
+                      comment: notification.commentId,
+                      ...(notification.parentCommentId
+                        ? { parentComment: notification.parentCommentId }
+                        : {}),
+                    });
+
+                    navigate(
+                      `/users/${notification.postOwnerId}?${params.toString()}`,
+                    );
+                  } else if (
+                    notification.type === "reply" &&
+                    notification.postOwnerId &&
+                    notification.postId &&
+                    notification.commentId &&
+                    notification.parentCommentId
+                  ) {
+                    const params = new URLSearchParams({
+                      post: notification.postId,
+                      comment: notification.commentId,
+                      parentComment: notification.parentCommentId,
+                    });
+
+                    navigate(
+                      `/users/${notification.postOwnerId}?${params.toString()}`,
+                    );
+                  } else if (
+                    notification.type === "comment" &&
+                    notification.postId &&
+                    notification.commentId
+                  ) {
+                    const params = new URLSearchParams({
+                      post: notification.postId,
+                      comment: notification.commentId,
+                    });
+
+                    navigate(
+                      `/users/${notification.postOwnerId}?${params.toString()}`,
+                    );
+                  } else if (
+                    notification.type === "like" &&
+                    notification.postId
+                  ) {
+                    navigate(`/profile?post=${notification.postId}`);
+                  } else if (
+                    notification.type === "friendRequest" &&
+                    notification.user?.id
+                  ) {
+                    navigate(`/users/${notification.user.id}`);
+                  }
+                }}
+                className="flex cursor-pointer items-center gap-2 border-b border-gray-200 p-3 hover:bg-gray-50 dark:border-slate-700 dark:hover:bg-slate-800"
+              >
+                <img
+                  src={notification.user?.profilePictureUrl || ProfilePic}
+                  alt=""
+                  className="h-9 w-9 flex-shrink-0 rounded-full object-cover"
+                />
+
+                <p className="text-sm text-black dark:text-gray-200">
+                  <span className="font-semibold">
+                    {notification.user?.name || notification.user?.username}
+                  </span>{" "}
+                  {notification.type === "friendRequest"
+                    ? "sent you a friend request"
+                    : notification.type === "like"
+                      ? "liked your post"
+                      : notification.type === "reply"
+                        ? "replied to your comment"
+                        : notification.type === "comment"
+                          ? "commented on your post"
+                          : notification.type === "commentLike"
+                            ? notification.parentCommentId
+                              ? "liked your reply"
+                              : "liked your comment"
+                            : ""}
+                </p>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
+      {showMessages && (
+        <div className="fixed left-1/2 top-14 z-50 max-h-[70vh] w-[calc(100%-1rem)] max-w-md -translate-x-1/2 overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900 md:hidden">
+          <div className="flex items-center justify-between border-b border-gray-200 p-3 dark:border-slate-700">
+            <span className="font-semibold text-black dark:text-white">
+              Messages
+            </span>
+
+            <button
+              type="button"
+              onClick={() => setShowMessages(false)}
+              aria-label="Close messages"
+              className="flex h-8 w-8 items-center justify-center rounded-full text-xl text-gray-500 hover:bg-gray-100 hover:text-black dark:text-gray-300 dark:hover:bg-slate-800 dark:hover:text-white"
+            >
+              ×
+            </button>
+          </div>
+
+          {inboxUsers.length === 0 ? (
+            <p className="p-4 text-sm text-gray-500 dark:text-gray-400">
+              No conversations yet
+            </p>
+          ) : (
+            inboxUsers.map((user) => (
+              <div
+                key={user.userId}
+                onClick={() => openChat(user)}
+                className={`flex cursor-pointer items-center gap-3 border-b border-gray-200 p-3 dark:border-slate-700 ${
+                  unreadChats.includes(user.userId)
+                    ? "bg-cyan-100 hover:bg-cyan-200 dark:bg-cyan-900/50 dark:hover:bg-cyan-900"
+                    : "hover:bg-gray-50 dark:hover:bg-slate-800"
+                }`}
+              >
+                <img
+                  src={user.profilePictureUrl || ProfilePic}
+                  alt=""
+                  className="h-10 w-10 flex-shrink-0 rounded-full object-cover"
+                />
+
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-semibold text-black dark:text-white">
+                    {user.name}
+                  </p>
+
+                  <p className="truncate text-sm text-gray-500 dark:text-gray-400">
+                    {user.latestMessage
+                      ? user.latestSenderUsername ===
+                        localStorage.getItem("username")
+                        ? `You: ${user.latestMessage}`
+                        : user.latestMessage
+                      : user.latestSenderUsername ===
+                          localStorage.getItem("username")
+                        ? "You: Photo"
+                        : `${user.name} sent you a photo`}
+                  </p>
+                </div>
+
+                {unreadChats.includes(user.userId) && (
+                  <span className="h-2 w-2 flex-shrink-0 rounded-full bg-teal-600" />
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
       <div className="hidden md:flex items-center justify-center gap-3 lg:gap-6 mx-auto">
         <Link
           to="/"
@@ -1269,7 +1468,7 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
             key={chat.userId}
             className={`fixed bottom-4 bg-white border shadow-xl rounded-xl z-50 w-[calc(100vw-1rem)] max-w-80 md:w-80 ${
               isMobileSelected
-                ? "block bottom-16 md:bottom-4"
+                ? "block bottom-20 md:bottom-4"
                 : "hidden md:block"
             }`}
             style={{
@@ -1378,37 +1577,53 @@ export default function Navbar({ handleLogout, profilePictureUrl }) {
 
       {/* Mobile conversation switcher */}
       {activeChats.length > 0 && (
-        <div className="fixed bottom-2 left-2 right-2 z-[60] flex gap-2 overflow-x-auto md:hidden">
-          {activeChats.map((chat) => {
-            const isSelected = activeMobileChatId === chat.userId;
+        <div className="fixed bottom-2 right-2 left-2 z-[60] flex flex-row-reverse justify-start gap-2 overflow-x-auto md:hidden">
+          {activeChats
+            .filter((chat) => minimizedChats.includes(chat.userId))
+            .map((chat) => {
+              const isSelected = activeMobileChatId === chat.userId;
 
-            return (
-              <button
-                key={chat.userId}
-                type="button"
-                onClick={() => {
-                  setActiveMobileChatId(chat.userId);
-                  setMinimizedChats((prev) =>
-                    prev.filter((id) => id !== chat.userId),
-                  );
-                }}
-                className={`flex min-w-0 max-w-40 flex-shrink-0 items-center gap-2 rounded-full border px-3 py-2 shadow ${
-                  isSelected
-                    ? "border-teal-700 bg-teal-700 text-white"
-                    : "border-gray-300 bg-white text-gray-800"
-                }`}
-              >
-                <img
-                  src={chat.profilePictureUrl || ProfilePic}
-                  alt=""
-                  className="h-6 w-6 flex-shrink-0 rounded-full object-cover"
-                />
-                <span className="truncate text-sm font-medium">
-                  {chat.name}
-                </span>
-              </button>
-            );
-          })}
+              return (
+                <button
+                  key={chat.userId}
+                  type="button"
+                  onClick={() => {
+                    setMinimizedChats((prev) => {
+                      const next = new Set(prev);
+
+                      if (
+                        activeMobileChatId &&
+                        activeMobileChatId !== chat.userId &&
+                        activeChats.some(
+                          (item) => item.userId === activeMobileChatId,
+                        )
+                      ) {
+                        next.add(activeMobileChatId);
+                      }
+
+                      next.delete(chat.userId);
+                      return [...next];
+                    });
+
+                    setActiveMobileChatId(chat.userId);
+                  }}
+                  className={`flex min-w-0 max-w-40 flex-shrink-0 items-center gap-2 rounded-full border px-3 py-2 shadow ${
+                    isSelected
+                      ? "border-teal-700 bg-teal-700 text-white"
+                      : "border-gray-300 bg-white text-gray-800"
+                  }`}
+                >
+                  <img
+                    src={chat.profilePictureUrl || ProfilePic}
+                    alt=""
+                    className="h-6 w-6 flex-shrink-0 rounded-full object-cover"
+                  />
+                  <span className="truncate text-sm font-medium">
+                    {chat.name}
+                  </span>
+                </button>
+              );
+            })}
         </div>
       )}
     </nav>
