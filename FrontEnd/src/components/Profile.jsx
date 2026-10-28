@@ -1713,7 +1713,7 @@ export default function Profile({ handleLogout }) {
           <div
             className={`relative flex flex-col ${
               showPhotoComments
-                ? "w-full max-w-6xl h-[85vh] max-h-[90vh]"
+                ? "w-full max-w-6xl h-[calc(100dvh-1.5rem)] max-h-[90vh] md:h-[85vh]"
                 : "w-fit max-w-[92vw] max-h-[90vh]"
             } bg-white dark:bg-slate-950 border border-gray-200 dark:border-slate-700 rounded-xl shadow-2xl overflow-hidden`}
             onClick={(e) => e.stopPropagation()}
@@ -1764,15 +1764,15 @@ export default function Profile({ handleLogout }) {
 
             {/* MIDDLE SECTION: PHOTO AND COMMENTS */}
             <div
-              className={`flex min-h-0 min-w-0 ${
-                showPhotoComments ? "flex-1" : "justify-center"
+              className={`flex flex-col md:flex-row flex-1 min-h-0 min-w-0 ${
+                showPhotoComments ? "" : "justify-center"
               }`}
             >
               {/* PHOTO SECTION */}
               <div
                 className={`relative min-w-0 min-h-0 bg-white dark:bg-slate-950 flex items-center justify-center overflow-hidden ${
                   showPhotoComments
-                    ? "flex-1"
+                    ? "w-full h-[30%] shrink-0 md:h-auto md:flex-1"
                     : "w-fit max-w-[92vw] max-h-[calc(90vh-8rem)]"
                 }`}
               >
@@ -1789,7 +1789,7 @@ export default function Profile({ handleLogout }) {
 
               {/* COMMENTS SECTION */}
               {showPhotoComments && (
-                <div className="w-1/2 min-w-0 min-h-0 bg-white dark:bg-slate-900 text-black dark:text-gray-200 flex flex-col border-l border-gray-200 dark:border-slate-700">
+                <div className="w-full flex-1 min-w-0 min-h-0 overflow-hidden md:w-1/2 bg-white dark:bg-slate-900 text-black dark:text-gray-200 flex flex-col border-t md:border-t-0 md:border-l border-gray-200 dark:border-slate-700">
                   {/* COMMENTS HEADER */}
                   <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-slate-700 flex-shrink-0">
                     <h3 className="font-semibold text-lg text-gray-900 dark:text-gray-100">
@@ -2129,7 +2129,7 @@ export default function Profile({ handleLogout }) {
           <div
             className={`relative flex flex-col ${
               showVideoComments
-                ? "w-full max-w-6xl h-[85vh] max-h-[90vh]"
+                ? "w-full max-w-6xl h-[calc(100dvh-1.5rem)] max-h-[90vh] md:h-[85vh]"
                 : "w-fit max-w-[92vw] max-h-[90vh]"
             } bg-white dark:bg-slate-950 border border-gray-200 dark:border-slate-700 rounded-xl shadow-2xl overflow-hidden`}
             onClick={(e) => e.stopPropagation()}
@@ -2180,15 +2180,15 @@ export default function Profile({ handleLogout }) {
 
             {/* MIDDLE SECTION: VIDEO AND COMMENTS */}
             <div
-              className={`flex min-h-0 min-w-0 ${
-                showVideoComments ? "flex-1" : "justify-center"
+              className={`flex flex-col md:flex-row flex-1 min-h-0 min-w-0 ${
+                showVideoComments ? "" : "justify-center"
               }`}
             >
               {/* VIDEO SECTION */}
               <div
                 className={`relative min-w-0 min-h-0 bg-white dark:bg-slate-950 flex items-center justify-center overflow-hidden ${
                   showVideoComments
-                    ? "flex-1"
+                    ? "w-full h-[30%] shrink-0 md:h-auto md:flex-1"
                     : "w-fit max-w-[92vw] max-h-[calc(90vh-8rem)]"
                 }`}
               >
@@ -2206,7 +2206,7 @@ export default function Profile({ handleLogout }) {
 
               {/* COMMENTS SECTION */}
               {showVideoComments && (
-                <div className="w-1/2 min-w-0 min-h-0 bg-white dark:bg-slate-900 text-black dark:text-gray-200 flex flex-col border-l border-gray-200 dark:border-slate-700">
+                <div className="w-full flex-1 min-w-0 min-h-0 overflow-hidden md:w-1/2 bg-white dark:bg-slate-900 text-black dark:text-gray-200 flex flex-col border-t md:border-t-0 md:border-l border-gray-200 dark:border-slate-700">
                   {/* COMMENTS HEADER */}
                   <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-slate-700 flex-shrink-0">
                     <h3 className="font-semibold text-lg text-gray-900 dark:text-gray-100">
