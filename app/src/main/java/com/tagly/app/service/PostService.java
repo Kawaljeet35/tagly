@@ -28,8 +28,9 @@ public class PostService {
     private final FriendRequestRepository friendRequestRepository;
     private final CommentRepository commentRepository;
     private final MinioProperties minioProperties;
+    private final NotificationService notificationService;
 
-    public PostService(UserRepository userRepository, PostRepository postRepository, LikeRepository likeRepository, CommentLikeRepository commentLikeRepository, S3Client s3Client, FriendRequestRepository friendRequestRepository, CommentRepository commentRepository, MinioProperties minioProperties){
+    public PostService(UserRepository userRepository, PostRepository postRepository, LikeRepository likeRepository, CommentLikeRepository commentLikeRepository, S3Client s3Client, FriendRequestRepository friendRequestRepository, CommentRepository commentRepository, MinioProperties minioProperties, NotificationService notificationService){
         this.userRepository = userRepository;
         this.postRepository = postRepository;
         this.likeRepository = likeRepository;
@@ -38,6 +39,7 @@ public class PostService {
         this.friendRequestRepository = friendRequestRepository;
         this.commentRepository = commentRepository;
         this.minioProperties = minioProperties;
+        this.notificationService = notificationService;
     }
 
     public void createPost(String content, String username, MultipartFile file){
@@ -270,6 +272,7 @@ public class PostService {
         return responses;
     }
 
+    @Transactional
     public void toggleLike(Long postId, String username) {
         Optional<User> userOpt = userRepository.findByUsername(username);
         Optional<Post> postOpt = postRepository.findById(postId);
@@ -297,13 +300,26 @@ public class PostService {
             like.setUser(user);
             like.setPost(post);
             like.setCreatedAt(LocalDateTime.now());
-            likeRepository.save(like);
+            Like savedLike = likeRepository.save(like);
+
+            notificationService.createNotification(
+                    post.getUser().getId(),
+                    user.getId(),
+                    "POST_LIKE",
+                    savedLike.getId(),
+                    post.getId(),
+                    post.getUser().getId(),
+                    null,
+                    null
+            );
+
             post.setLikesCount(post.getLikesCount() + 1);
         }
 
         postRepository.save(post);
     }
 
+    @Transactional
     public void toggleCommentLike(
             Long commentId,
             String username
@@ -351,7 +367,23 @@ public class PostService {
             commentLike.setComment(comment);
             commentLike.setCreatedAt(LocalDateTime.now());
 
-            commentLikeRepository.save(commentLike);
+            CommentLike savedCommentLike =
+                    commentLikeRepository.save(commentLike);
+
+            notificationService.createNotification(
+                    comment.getUser().getId(),
+                    user.getId(),
+                    comment.getParentComment() == null
+                            ? "COMMENT_LIKE"
+                            : "REPLY_LIKE",
+                    savedCommentLike.getId(),
+                    comment.getPost().getId(),
+                    comment.getPost().getUser().getId(),
+                    comment.getId(),
+                    comment.getParentComment() != null
+                            ? comment.getParentComment().getId()
+                            : null
+            );
 
             comment.setLikesCount(
                     comment.getLikesCount() + 1
@@ -361,6 +393,7 @@ public class PostService {
         commentRepository.save(comment);
     }
 
+    @Transactional
     public void addComment(Long postId, String username, String content) {
         Optional<User> userOpt = userRepository.findByUsername(username);
         Optional<Post> postOpt = postRepository.findById(postId);
@@ -382,11 +415,24 @@ public class PostService {
         comment.setPost(post);
         comment.setContent(content);
         comment.setCreatedAt(LocalDateTime.now());
-        commentRepository.save(comment);
+        Comment savedComment = commentRepository.save(comment);
+
+        notificationService.createNotification(
+                post.getUser().getId(),
+                user.getId(),
+                "COMMENT",
+                savedComment.getId(),
+                post.getId(),
+                post.getUser().getId(),
+                savedComment.getId(),
+                null
+        );
+
         post.setCommentsCount(post.getCommentsCount() + 1);
         postRepository.save(post);
     }
 
+    @Transactional
     public void addReply(
             Long commentId,
             String username,
@@ -421,9 +467,21 @@ public class PostService {
         reply.setCreatedAt(LocalDateTime.now());
         reply.setParentComment(parentComment);
 
-        commentRepository.save(reply);
+        Comment savedReply = commentRepository.save(reply);
 
         Post post = parentComment.getPost();
+
+        notificationService.createNotification(
+                parentComment.getUser().getId(),
+                user.getId(),
+                "REPLY",
+                savedReply.getId(),
+                post.getId(),
+                post.getUser().getId(),
+                savedReply.getId(),
+                parentComment.getId()
+        );
+
         post.setCommentsCount(post.getCommentsCount() + 1);
 
         postRepository.save(post);

@@ -7,6 +7,7 @@ import com.tagly.app.repository.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -17,13 +18,16 @@ public class FriendRequestService {
 
     private final FriendRequestRepository friendRequestRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     public FriendRequestService(FriendRequestRepository friendRequestRepository,
-                                UserRepository userRepository) {
+                                UserRepository userRepository, NotificationService notificationService) {
         this.friendRequestRepository = friendRequestRepository;
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
     }
 
+    @Transactional
     public void sendRequest(String senderUsername, Long receiverId) {
 
         User sender = userRepository.findByUsername(senderUsername)
@@ -56,7 +60,19 @@ public class FriendRequestService {
         request.setStatus("PENDING");
         request.setCreatedAt(LocalDateTime.now());
 
-        friendRequestRepository.save(request);
+        FriendRequest savedRequest =
+                friendRequestRepository.save(request);
+
+        notificationService.createNotification(
+                receiver.getId(),
+                sender.getId(),
+                "FRIEND_REQUEST",
+                savedRequest.getId(),
+                null,
+                null,
+                null,
+                null
+        );
     }
 
     public List<FriendRequest> getPendingRequests(String username) {
